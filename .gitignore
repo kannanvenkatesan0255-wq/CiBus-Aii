@@ -1,0 +1,35 @@
+# Python / ML artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.ipynb_checkpoints/
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ML Model Artefacts and Pickles (keep directory structure tracked)
+ai-engine/models/*.pkl
+ai-engine/models/*.joblib
+!ai-engine/models/.gitkeep
+
+# Generated Datasets
+ai-engine/dataset/*.csv
+!ai-engine/dataset/.gitkeep
+
+# Generated Evaluation Plots & Logs
+ai-engine/plots/*.png
+ai-engine/plots/*.jpg
+!ai-engine/plots/.gitkeep
+*.log
+
+# OS & IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.sublime-workspace
