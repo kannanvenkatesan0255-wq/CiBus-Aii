@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ImpactDashboard from './components/ImpactDashboard';
+import WorkflowStepper from './components/WorkflowStepper';
 import PredictionForm from './components/PredictionForm';
 import ResultCard from './components/ResultCard';
 import NGOMatchingSection from './components/NGOMatchingSection';
@@ -13,8 +14,10 @@ import { predictSurplus } from './services/predictionService';
 import './styles/App.css';
 
 export default function App() {
+  const [workflowStatus, setWorkflowStatus] = useState('IDLE');
   const [prediction, setPrediction] = useState(null);
   const [matchedNGOs, setMatchedNGOs] = useState([]);
+  const [routeResult, setRouteResult] = useState(null);
   const [dashboardKey, setDashboardKey] = useState(0);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +30,7 @@ export default function App() {
     try {
       const result = await predictSurplus(formData);
       setPrediction(result);
+      setWorkflowStatus('PREDICTED');
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during prediction.');
     } finally {
@@ -34,16 +38,32 @@ export default function App() {
     }
   };
 
+  const handleMatchesUpdated = (matches) => {
+    setMatchedNGOs(matches);
+  };
+
+  const handleMatchingSuccess = (result) => {
+    setWorkflowStatus('MATCHED');
+  };
+
+  const handleRouteOptimized = (result) => {
+    setRouteResult(result);
+    setWorkflowStatus('ROUTE_OPTIMIZED');
+  };
+
+  const handleActivityLogged = (recordedRoute) => {
+    setWorkflowStatus('RECORDED');
+    // Increment key to trigger fresh data load in dashboard
+    setDashboardKey(prev => prev + 1);
+  };
+
   const handleReset = () => {
     setPrediction(null);
     setMatchedNGOs([]);
+    setRouteResult(null);
+    setWorkflowStatus('IDLE');
     setError('');
     setIsLoading(false);
-  };
-
-  const handleActivityLogged = () => {
-    // Increment key to trigger fresh data load in dashboard
-    setDashboardKey(prev => prev + 1);
   };
 
   return (
@@ -53,9 +73,16 @@ export default function App() {
       <main className="main-content">
         <Hero />
 
+        {/* Visual Workflow Progress Stepper */}
+        <WorkflowStepper
+          currentStatus={workflowStatus}
+          onResetWorkflow={handleReset}
+        />
+
         {/* Operational Impact Dashboard & ML Performance Panel */}
         <ImpactDashboard key={dashboardKey} />
 
+        {/* Prediction Engine Stage */}
         <div className="prediction-grid" id="prediction-section">
           <PredictionForm
             onSubmit={handlePredict}
@@ -70,16 +97,18 @@ export default function App() {
           />
         </div>
 
-        {/* Extended Redistribution Module (Active when prediction exists or accessible for demo) */}
+        {/* Recipient NGO Matching & Allocation Stage */}
         <NGOMatchingSection
           predictedSurplus={prediction ? prediction.predicted_surplus_meals : 0}
-          onMatchesUpdated={(matches) => setMatchedNGOs(matches)}
+          onMatchesUpdated={handleMatchesUpdated}
+          onMatchingSuccess={handleMatchingSuccess}
         />
 
-        {/* Route Optimization & Pickup Planning Module */}
+        {/* Route Optimization & SVG Sequence Map Stage */}
         <RoutePlanningSection
           matchedNGOs={matchedNGOs}
           predictedSurplus={prediction ? prediction.predicted_surplus_meals : 0}
+          onRouteOptimized={handleRouteOptimized}
           onActivityLogged={handleActivityLogged}
         />
 
@@ -91,5 +120,3 @@ export default function App() {
     </div>
   );
 }
-
-

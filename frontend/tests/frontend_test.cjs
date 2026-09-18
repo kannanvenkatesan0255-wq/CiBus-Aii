@@ -3,7 +3,8 @@
  * File: frontend/tests/frontend_test.cjs
  * 
  * Purpose:
- * Validates frontend components, service integration, leakage prevention, and API compatibility.
+ * Validates frontend components, service integration, leakage prevention,
+ * workflow state coordination, SVG location visualization, and API compatibility.
  */
 
 const fs = require('fs');
@@ -46,8 +47,13 @@ runTest('Verify frontend directory structure and core files exist', () => {
     'src/services/predictionService.js',
     'src/components/Header.jsx',
     'src/components/Hero.jsx',
+    'src/components/WorkflowStepper.jsx',
     'src/components/PredictionForm.jsx',
     'src/components/ResultCard.jsx',
+    'src/components/NGOMatchingSection.jsx',
+    'src/components/RoutePlanningSection.jsx',
+    'src/components/RouteMapVisualization.jsx',
+    'src/components/ImpactDashboard.jsx',
     'src/components/HealthStatus.jsx',
     'src/components/HowItWorks.jsx',
     'src/components/FutureModules.jsx',
@@ -95,7 +101,6 @@ runTest('Confirm Meals_Sold is strictly excluded from frontend forms and payload
 
   filesToCheck.forEach(file => {
     const code = fs.readFileSync(path.join(SRC_DIR, file), 'utf8');
-    // Check if Meals_Sold is used as an input field (excluding explicit security check assertions)
     const hasInputMealsSold = /<input[^>]+Meals_Sold/i.test(code) || /<select[^>]+Meals_Sold/i.test(code);
     assert.strictEqual(hasInputMealsSold, false, `Forbidden Meals_Sold input found in ${file}`);
   });
@@ -117,7 +122,6 @@ runTest('Verify ResultCard displays surplus meals, model details, and no false a
   assert.strictEqual(resultCardCode.includes("predicted_surplus_meals"), true);
   assert.strictEqual(resultCardCode.includes("Surplus_Meals (Regression)"), true);
   assert.strictEqual(resultCardCode.includes("Random Forest Regressor"), true);
-  // Ensure no false accuracy percentage claim
   assert.strictEqual(/accuracy\s*%/i.test(resultCardCode), false, "ResultCard must not claim accuracy percentage");
 });
 
@@ -128,28 +132,21 @@ runTest('Verify Reset button clears form state and calls onReset handler', () =>
   assert.strictEqual(formCode.includes("onReset();"), true);
 });
 
-// Test 7: Verify Vite build succeeds without compilation errors
-runTest('Verify Vite builds the production bundle cleanly', () => {
-  const { execSync } = require('child_process');
-  const buildOutput = execSync('npm run build', { cwd: FRONTEND_DIR, encoding: 'utf8' });
-  assert.strictEqual(fs.existsSync(path.join(FRONTEND_DIR, 'dist', 'index.html')), true);
-});
-
-// Test 8: Verify NGOMatchingSection.jsx exists and displays synthetic data disclaimer
+// Test 7: Verify NGOMatchingSection.jsx exists and displays synthetic data disclaimer
 runTest('Verify NGOMatchingSection.jsx component exists with demo data disclaimer', () => {
   const ngoCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'NGOMatchingSection.jsx'), 'utf8');
   assert.strictEqual(ngoCode.includes("Demo / Synthetic NGO Dataset"), true);
   assert.strictEqual(ngoCode.includes("Recipient NGO Matching & Allocation"), true);
 });
 
-// Test 9: Verify matchNGOs API call in predictionService.js
+// Test 8: Verify matchNGOs API call in predictionService.js
 runTest('Verify matchNGOs API integration in predictionService.js', () => {
   const serviceCode = fs.readFileSync(path.join(SRC_DIR, 'services', 'predictionService.js'), 'utf8');
   assert.strictEqual(serviceCode.includes("matchNGOs"), true);
   assert.strictEqual(serviceCode.includes("endpoint = `${API_BASE_URL}/api/match-ngos`"), true);
 });
 
-// Test 10: Verify NGOMatchingSection includes dietary and location controls
+// Test 9: Verify NGOMatchingSection includes dietary and location controls
 runTest('Verify dietary and location controls in NGOMatchingSection.jsx', () => {
   const ngoCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'NGOMatchingSection.jsx'), 'utf8');
   assert.strictEqual(ngoCode.includes("Vegetarian"), true);
@@ -158,7 +155,7 @@ runTest('Verify dietary and location controls in NGOMatchingSection.jsx', () => 
   assert.strictEqual(ngoCode.includes("match_score"), true);
 });
 
-// Test 11: Verify RoutePlanningSection.jsx exists and displays demo planner disclaimer
+// Test 10: Verify RoutePlanningSection.jsx exists and displays demo planner disclaimer
 runTest('Verify RoutePlanningSection.jsx component exists with heuristic disclaimer', () => {
   const routeCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'RoutePlanningSection.jsx'), 'utf8');
   assert.strictEqual(routeCode.includes("Demo Route Planner"), true);
@@ -166,14 +163,14 @@ runTest('Verify RoutePlanningSection.jsx component exists with heuristic disclai
   assert.strictEqual(routeCode.includes("Haversine"), true);
 });
 
-// Test 12: Verify optimizeRoute API integration in predictionService.js
+// Test 11: Verify optimizeRoute API integration in predictionService.js
 runTest('Verify optimizeRoute API client in predictionService.js', () => {
   const serviceCode = fs.readFileSync(path.join(SRC_DIR, 'services', 'predictionService.js'), 'utf8');
   assert.strictEqual(serviceCode.includes("optimizeRoute"), true);
   assert.strictEqual(serviceCode.includes("endpoint = `${API_BASE_URL}/api/optimize-route`"), true);
 });
 
-// Test 13: Verify route timeline visualization and summary elements in RoutePlanningSection
+// Test 12: Verify route timeline visualization and summary elements in RoutePlanningSection
 runTest('Verify route timeline visualization and summary metrics in RoutePlanningSection.jsx', () => {
   const routeCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'RoutePlanningSection.jsx'), 'utf8');
   assert.strictEqual(routeCode.includes("total_distance_km"), true);
@@ -183,14 +180,7 @@ runTest('Verify route timeline visualization and summary metrics in RoutePlannin
   assert.strictEqual(routeCode.includes("distance_matrix"), true);
 });
 
-// Test 14: Verify App.jsx imports and mounts RoutePlanningSection
-runTest('Verify App.jsx connects NGOMatchingSection to RoutePlanningSection', () => {
-  const appCode = fs.readFileSync(path.join(SRC_DIR, 'App.jsx'), 'utf8');
-  assert.strictEqual(appCode.includes("RoutePlanningSection"), true);
-  assert.strictEqual(appCode.includes("matchedNGOs"), true);
-});
-
-// Test 15: Verify ImpactDashboard.jsx component renders operational cards and ML panel
+// Test 13: Verify ImpactDashboard.jsx component renders operational cards and ML panel
 runTest('Verify ImpactDashboard.jsx component exists with operational metrics and ML panel', () => {
   const dashCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'ImpactDashboard.jsx'), 'utf8');
   assert.strictEqual(dashCode.includes("CIBUS-AI Impact Dashboard"), true);
@@ -201,7 +191,7 @@ runTest('Verify ImpactDashboard.jsx component exists with operational metrics an
   assert.strictEqual(dashCode.includes("R²"), true);
 });
 
-// Test 16: Verify dashboard API methods in predictionService.js
+// Test 14: Verify dashboard API methods in predictionService.js
 runTest('Verify getDashboardSummary, getRecentActivities, and recordActivity in predictionService.js', () => {
   const serviceCode = fs.readFileSync(path.join(SRC_DIR, 'services', 'predictionService.js'), 'utf8');
   assert.strictEqual(serviceCode.includes("getDashboardSummary"), true);
@@ -210,7 +200,7 @@ runTest('Verify getDashboardSummary, getRecentActivities, and recordActivity in 
   assert.strictEqual(serviceCode.includes("/api/dashboard/summary"), true);
 });
 
-// Test 17: Verify Header.jsx navigation anchors
+// Test 15: Verify Header.jsx navigation anchors
 runTest('Verify Header.jsx navigation bar includes Dashboard and Workflow links', () => {
   const headerCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'Header.jsx'), 'utf8');
   assert.strictEqual(headerCode.includes("#impact-dashboard"), true);
@@ -219,10 +209,61 @@ runTest('Verify Header.jsx navigation bar includes Dashboard and Workflow links'
   assert.strictEqual(headerCode.includes("#route-planning"), true);
 });
 
-// Test 18: Verify App.jsx integrates ImpactDashboard
-runTest('Verify App.jsx mounts ImpactDashboard component', () => {
+// Test 16: Verify WorkflowStepper.jsx implementation and stages
+runTest('Verify WorkflowStepper.jsx component renders 4 milestone stages', () => {
+  const stepperCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'WorkflowStepper.jsx'), 'utf8');
+  assert.strictEqual(stepperCode.includes("Surplus Forecast"), true);
+  assert.strictEqual(stepperCode.includes("Recipient Matching"), true);
+  assert.strictEqual(stepperCode.includes("Route Planning"), true);
+  assert.strictEqual(stepperCode.includes("Impact Telemetry"), true);
+  assert.strictEqual(stepperCode.includes("End-to-End Redistribution Workflow"), true);
+});
+
+// Test 17: Verify RouteMapVisualization.jsx SVG rendering and coordinate normalization
+runTest('Verify RouteMapVisualization.jsx implements deterministic SVG coordinate normalization', () => {
+  const mapCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'RouteMapVisualization.jsx'), 'utf8');
+  assert.strictEqual(mapCode.includes("<svg"), true);
+  assert.strictEqual(mapCode.includes("minLat"), true);
+  assert.strictEqual(mapCode.includes("maxLat"), true);
+  assert.strictEqual(mapCode.includes("minLon"), true);
+  assert.strictEqual(mapCode.includes("maxLon"), true);
+  assert.strictEqual(mapCode.includes("projectPoint"), true);
+  assert.strictEqual(mapCode.includes("Geographic Visualization Note"), true);
+});
+
+// Test 18: Verify RoutePlanningSection.jsx supports custom coordinates and integrates RouteMapVisualization
+runTest('Verify RoutePlanningSection.jsx supports custom coordinates and RouteMapVisualization', () => {
+  const routeCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'RoutePlanningSection.jsx'), 'utf8');
+  assert.strictEqual(routeCode.includes("RouteMapVisualization"), true);
+  assert.strictEqual(routeCode.includes("useCustomLocation"), true);
+  assert.strictEqual(routeCode.includes("customLat"), true);
+  assert.strictEqual(routeCode.includes("customLon"), true);
+  assert.strictEqual(routeCode.includes("validateCustomCoords"), true);
+});
+
+// Test 19: Verify duplicate activity submission prevention
+runTest('Verify duplicate activity submission prevention in RoutePlanningSection.jsx', () => {
+  const routeCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'RoutePlanningSection.jsx'), 'utf8');
+  assert.strictEqual(routeCode.includes("activitySaved"), true);
+  assert.strictEqual(routeCode.includes("disabled={isLogging || activitySaved}"), true);
+  assert.strictEqual(routeCode.includes("Redistribution Plan Recorded"), true);
+});
+
+// Test 20: Verify App.jsx connects WorkflowStepper and all stages
+runTest('Verify App.jsx connects WorkflowStepper, NGO matching, and RoutePlanning', () => {
   const appCode = fs.readFileSync(path.join(SRC_DIR, 'App.jsx'), 'utf8');
-  assert.strictEqual(appCode.includes("ImpactDashboard"), true);
+  assert.strictEqual(appCode.includes("WorkflowStepper"), true);
+  assert.strictEqual(appCode.includes("workflowStatus"), true);
+  assert.strictEqual(appCode.includes("handleRouteOptimized"), true);
+  assert.strictEqual(appCode.includes("handleMatchingSuccess"), true);
+  assert.strictEqual(appCode.includes("handleActivityLogged"), true);
+});
+
+// Test 21: Verify Vite build succeeds without compilation errors
+runTest('Verify Vite builds the production bundle cleanly', () => {
+  const { execSync } = require('child_process');
+  const buildOutput = execSync('npm run build', { cwd: FRONTEND_DIR, encoding: 'utf8' });
+  assert.strictEqual(fs.existsSync(path.join(FRONTEND_DIR, 'dist', 'index.html')), true);
 });
 
 console.log(`\n----------------------------------------------------------------------`);
@@ -234,6 +275,3 @@ if (passedTests === totalTests) {
 } else {
   process.exit(1);
 }
-
-
-

@@ -209,6 +209,8 @@ The refined model (`n_estimators=200`, `max_depth=15`, `max_features=0.8`) was s
 | **NGO Matching Service** | `backend/app/services/ngo_matching_service.py` | Predicted surplus, dietary type, coordinates | Rule-based multi-factor scoring & constraint-based capacity allocation. | Matched NGO list & allocations |
 | **Route Optimization Service** | `backend/app/services/route_optimization_service.py` | Source coordinates, matched NGO coordinates | Pairwise Haversine distance matrix & greedy Nearest-Neighbor route sequencing ($O(N^2)$). | Sequenced itinerary & segment distances |
 | **Route Optimization API** | `backend/app/routes/route_optimization.py` | `POST /api/optimize-route` | Pydantic validation, coordinate checks, duplicate prevention, and response serialization. | `RouteOptimizeResponse` JSON |
+| **Location & Route Map** | `frontend/src/components/RouteMapVisualization.jsx` | Ordered route waypoints & origin coordinates | Deterministic 2D Cartesian SVG coordinate normalization (min/max bounding + padding). | Interactive SVG vector route map |
+| **Workflow State Stepper** | `frontend/src/components/WorkflowStepper.jsx` | Current pipeline stage status | Visual 4-stage stepper managing transitions across Predict -> Match -> Route -> Telemetry. | Visual progress bar & quick jump links |
 | **Analytics Service** | `backend/app/services/analytics_service.py` | Local activity store, ML evaluation file | Aggregates operational totals, computes allocation rate %, and loads factual ML performance metrics. | `DashboardResponse` data dict |
 | **Dashboard API** | `backend/app/routes/dashboard.py` | `GET /api/dashboard/summary`, `/recent`, `POST /activity` | Exposes operational telemetry, activity history, and workflow logging. | JSON endpoints |
 
@@ -245,15 +247,15 @@ cv_search.fit(X_train, y_train)
 ```
 *Explanation:* Evaluates hyperparameter candidates using 3-Fold Cross-Validation strictly on the training partition to prevent test-set leakage.
 
-### Snippet 3: Defensive Input Validation & Leakage Rejection (`ai-engine/prediction/predict.py`)
-```python
-def validate_prediction_input(input_dict: Dict[str, Any]) -> Dict[str, Any]:
-    if "Meals_Sold" in input_dict or "meals_sold" in input_dict:
-        raise ValueError("CRITICAL ERROR: 'Meals_Sold' is a post-service outcome and cannot be accepted.")
-    # Validates numerical bounds (Meals_Prepared >= 0, 1.0 <= Avg_Rating <= 5.0)
-    ...
+### Snippet 3: Deterministic SVG Coordinate Normalization (`frontend/src/components/RouteMapVisualization.jsx`)
+```javascript
+const projectPoint = (lat, lon) => {
+  const x = (lonSpan <= 0.00001) ? SVG_WIDTH / 2 : PADDING + ((lon - minLon) / lonSpan) * (SVG_WIDTH - 2 * PADDING);
+  const y = (latSpan <= 0.00001) ? SVG_HEIGHT / 2 : SVG_HEIGHT - (PADDING + ((lat - minLat) / latSpan) * (SVG_HEIGHT - 2 * PADDING));
+  return { x, y };
+};
 ```
-*Explanation:* Protects the deployed prediction engine against runtime data leakage and invalid out-of-bounds parameters.
+*Explanation:* Maps geographic latitude and longitude coordinates into 2D SVG pixel dimensions without external map SDK dependencies or API credentials.
 
 ## 5.3 UI, Backend & Extended Application Modules
 
@@ -263,7 +265,7 @@ The trained Random Forest model and pre-fitted `ColumnTransformer` are served vi
 - `GET /health`: Diagnostic monitor checking server and model artifact readiness.
 
 ### Extended Module 1: React Single-Page Web Dashboard (`frontend/`)
-A responsive, dark-glassmorphism user interface built with **React** and **Vite** allowing dining operators to input pre-service parameters, view real-time surplus forecasts, and inspect model specifications.
+A responsive, dark-glassmorphism user interface built with **React** and **Vite** featuring a 4-milestone `WorkflowStepper`, surplus prediction form, matched recipient NGO tables, SVG route maps, and the operational `ImpactDashboard`.
 
 ### Extended Module 2: Rule-Based NGO Matching & Redistribution (`backend/app/services/ngo_matching_service.py`)
 > **Important Distinction:** The NGO Matching module is a deterministic, rule-based heuristic allocation component, strictly separate from the Supervised Random Forest ML model.
@@ -271,6 +273,14 @@ A responsive, dark-glassmorphism user interface built with **React** and **Vite*
 It takes the forecasted surplus $\hat{y}$ from the ML engine and matches candidate partner organizations from a synthetic recipient directory (`backend/data/ngos.csv`) using:
 1. **Multi-Factor Heuristic Score:** Evaluates active receiving status ($35\%$), Haversine spherical transit distance ($25\%$), dietary format compatibility ($20\%$), and capacity suitability ($20\%$).
 2. **Constraint-Based Allocation:** Enforces $\text{Allocated Meals}_i \le \text{Capacity}_i$ and $\sum \text{Allocated Meals}_i \le \text{Predicted Surplus}$, preventing shelter overload.
+
+### Extended Module 3: Nearest-Neighbor Route Optimization & SVG Mapping
+- **Backend Sequencer:** Greedy nearest-neighbor solver determining stop sequence and segment transit distances based on pairwise Haversine calculations.
+- **Frontend Visualization:** Zero-dependency SVG map rendering origin and recipient nodes, animated directional segments, and distance badges.
+
+### Extended Module 4: Impact Dashboard & Telemetry Persistence
+- **Activity Store:** Local JSON persistence tracking planned redistribution itineraries.
+- **Dynamic Telemetry:** Real-time KPI cards reflecting cumulative planned allocations, average allocation rates, and verified ML model diagnostics ($R^2 = 0.9543$).
 
 ---
 

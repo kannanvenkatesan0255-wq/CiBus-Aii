@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { optimizeRoute, recordActivity } from '../services/predictionService';
+import RouteMapVisualization from './RouteMapVisualization';
 
 const SOURCE_PRESETS = [
   { name: 'Guindy Central Dispatch (13.01° N, 80.20° E)', lat: 13.0067, lon: 80.2026 },
@@ -17,16 +18,27 @@ const DEMO_NGOS = [
   { ngo_id: 'NGO_008', name: 'Pasumai Thayagam Kitchen', latitude: 12.9249, longitude: 80.1000, allocated_meals: 50.0 }
 ];
 
-export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onActivityLogged, predictedSurplus }) {
+export default function RoutePlanningSection({
+  matchedNGOs = [],
+  sourceLocation = null,
+  onActivityLogged = null,
+  onRouteOptimized = null,
+  predictedSurplus = 0
+}) {
+  const [useCustomLocation, setUseCustomLocation] = useState(false);
   const [selectedSourceIdx, setSelectedSourceIdx] = useState(0);
+  const [customName, setCustomName] = useState('Central Community Kitchen');
+  const [customLat, setCustomLat] = useState('13.0827');
+  const [customLon, setCustomLon] = useState('80.2707');
+
   const [activeNGOs, setActiveNGOs] = useState([]);
   const [routeResult, setRouteResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
+  const [activitySaved, setActivitySaved] = useState(false);
   const [loggedStatus, setLoggedStatus] = useState('');
   const [error, setError] = useState('');
   const [showMatrix, setShowMatrix] = useState(false);
-
 
   // Sync active NGOs when upstream matching produces recipients
   useEffect(() => {
@@ -44,33 +56,69 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
     }
   }, [matchedNGOs]);
 
+  const validateCustomCoords = () => {
+    const lat = parseFloat(customLat);
+    const lon = parseFloat(customLon);
+
+    if (!customName.trim()) {
+      return { valid: false, message: 'Please enter a valid food source facility name.' };
+    }
+    if (isNaN(lat) || lat < -90.0 || lat > 90.0) {
+      return { valid: false, message: 'Latitude must be a valid decimal number between -90.0 and +90.0.' };
+    }
+    if (isNaN(lon) || lon < -180.0 || lon > 180.0) {
+      return { valid: false, message: 'Longitude must be a valid decimal number between -180.0 and +180.0.' };
+    }
+
+    return { valid: true, lat, lon, name: customName.trim() };
+  };
+
   const handleOptimizeSubmit = async (e) => {
     if (e) e.preventDefault();
 
     if (!activeNGOs || activeNGOs.length === 0) {
-      setError('Please provide at least one recipient NGO to plan a distribution route.');
+      setError('Please provide at least one recipient NGO stop to plan a distribution route.');
       return;
+    }
+
+    let sourceObj;
+    if (useCustomLocation) {
+      const val = validateCustomCoords();
+      if (!val.valid) {
+        setError(val.message);
+        return;
+      }
+      sourceObj = {
+        name: val.name,
+        latitude: val.lat,
+        longitude: val.lon
+      };
+    } else {
+      const sourcePreset = SOURCE_PRESETS[selectedSourceIdx];
+      sourceObj = {
+        name: sourcePreset.name.split('(')[0].trim(),
+        latitude: sourcePreset.lat,
+        longitude: sourcePreset.lon
+      };
     }
 
     setIsLoading(true);
     setError('');
     setRouteResult(null);
-
-    const sourcePreset = SOURCE_PRESETS[selectedSourceIdx];
+    setActivitySaved(false);
+    setLoggedStatus('');
 
     try {
       const payload = {
-        source: {
-          name: sourcePreset.name.split('(')[0].trim(),
-          latitude: sourcePreset.lat,
-          longitude: sourcePreset.lon
-        },
+        source: sourceObj,
         ngos: activeNGOs
       };
 
       const result = await optimizeRoute(payload);
       setRouteResult(result);
-      setLoggedStatus('');
+      if (onRouteOptimized) {
+        onRouteOptimized(result);
+      }
     } catch (err) {
       setError(err.message || 'Failed to optimize distribution route.');
     } finally {
@@ -79,9 +127,9 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
   };
 
   const handleSaveActivity = async () => {
-    if (!routeResult) return;
+    if (!routeResult || activitySaved || isLogging) return;
     setIsLogging(true);
-    setLoggedStatus('');
+    setError('');
 
     try {
       const surplus = predictedSurplus !== undefined && predictedSurplus !== null && Number(predictedSurplus) > 0
@@ -99,12 +147,13 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
         notes: `Itinerary generated via nearest-neighbor routing (${routeResult.summary.total_distance_km} km).`
       });
 
-      setLoggedStatus('✅ Planned itinerary successfully saved to Impact Dashboard activity log!');
+      setActivitySaved(true);
+      setLoggedStatus('✅ Redistribution plan recorded successfully in the Impact Dashboard telemetry store!');
       if (onActivityLogged) {
-        onActivityLogged();
+        onActivityLogged(routeResult);
       }
     } catch (err) {
-      setError(err.message || 'Failed to record activity.');
+      setError(err.message || 'Failed to record redistribution plan.');
     } finally {
       setIsLogging(false);
     }
@@ -112,10 +161,10 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
 
   const handleClearRoute = () => {
     setRouteResult(null);
+    setActivitySaved(false);
     setLoggedStatus('');
     setError('');
   };
-
 
   return (
     <section className="info-section route-planning-section" id="route-planning" style={{ marginTop: '2rem' }}>
@@ -155,26 +204,94 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
           </div>
         )}
 
-        {/* Source Configuration and Trigger Form */}
+        {/* Source Configuration Form */}
         <form onSubmit={handleOptimizeSubmit}>
+          <div style={{ marginBottom: '1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Origin Source Mode:</span>
+            <button
+              type="button"
+              className={`btn ${!useCustomLocation ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
+              onClick={() => setUseCustomLocation(false)}
+            >
+              Preset Facilities
+            </button>
+            <button
+              type="button"
+              className={`btn ${useCustomLocation ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
+              onClick={() => setUseCustomLocation(true)}
+            >
+              Custom Coordinates
+            </button>
+          </div>
+
           <div className="form-grid" style={{ marginBottom: '1.5rem' }}>
-            {/* Origin Dispatch Facility */}
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label className="form-label" htmlFor="route-source-location">
-                Starting Food Source / Dispatch Origin
-              </label>
-              <select
-                id="route-source-location"
-                className="form-control"
-                value={selectedSourceIdx}
-                onChange={(e) => setSelectedSourceIdx(Number(e.target.value))}
-                disabled={isLoading}
-              >
-                {SOURCE_PRESETS.map((preset, idx) => (
-                  <option key={idx} value={idx}>{preset.name}</option>
-                ))}
-              </select>
-            </div>
+            {!useCustomLocation ? (
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label className="form-label" htmlFor="route-source-location">
+                  Starting Food Source / Dispatch Origin
+                </label>
+                <select
+                  id="route-source-location"
+                  className="form-control"
+                  value={selectedSourceIdx}
+                  onChange={(e) => setSelectedSourceIdx(Number(e.target.value))}
+                  disabled={isLoading}
+                >
+                  {SOURCE_PRESETS.map((preset, idx) => (
+                    <option key={idx} value={idx}>{preset.name}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label className="form-label" htmlFor="custom-source-name">
+                    Food Source Establishment Name
+                  </label>
+                  <input
+                    id="custom-source-name"
+                    type="text"
+                    className="form-control"
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="e.g. Central Community Kitchen"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="custom-source-lat">
+                    Latitude (-90.0 to +90.0)
+                  </label>
+                  <input
+                    id="custom-source-lat"
+                    type="number"
+                    step="0.0001"
+                    className="form-control"
+                    value={customLat}
+                    onChange={(e) => setCustomLat(e.target.value)}
+                    placeholder="13.0827"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="custom-source-lon">
+                    Longitude (-180.0 to +180.0)
+                  </label>
+                  <input
+                    id="custom-source-lon"
+                    type="number"
+                    step="0.0001"
+                    className="form-control"
+                    value={customLon}
+                    onChange={(e) => setCustomLon(e.target.value)}
+                    placeholder="80.2707"
+                    disabled={isLoading}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Action Buttons */}
             <div className="form-group" style={{ gridColumn: 'span 2', justifyContent: 'flex-end' }}>
@@ -238,6 +355,12 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
                 </div>
               </div>
             </div>
+
+            {/* SVG Geographic Coordinate & Sequence Map */}
+            <RouteMapVisualization
+              route={routeResult.route}
+              source={routeResult.source}
+            />
 
             {/* Visual Route Flow Timeline */}
             <h4 style={{ marginBottom: '1.25rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -313,7 +436,7 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
                       </div>
 
                       <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                        <span>📍 ({stop.latitude.toFixed(4)}°, {stop.longitude.toFixed(4)}°)</span>
+                        <span>📍 ({Number(stop.latitude).toFixed(4)}°, {Number(stop.longitude).toFixed(4)}°)</span>
                         {!isSource && (
                           <span style={{ color: '#fbbf24' }}>
                             📏 +{stop.distance_from_previous_km} km from previous waypoint
@@ -374,17 +497,27 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
                 type="button"
                 className="btn btn-primary"
                 style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  background: activitySaved
+                    ? 'rgba(16, 185, 129, 0.2)'
+                    : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: activitySaved ? '#34d399' : '#ffffff',
+                  borderColor: activitySaved ? 'rgba(16, 185, 129, 0.4)' : 'transparent',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
                   fontSize: '0.9rem',
-                  padding: '0.6rem 1.25rem'
+                  padding: '0.6rem 1.25rem',
+                  cursor: activitySaved ? 'default' : 'pointer'
                 }}
                 onClick={handleSaveActivity}
-                disabled={isLogging}
+                disabled={isLogging || activitySaved}
               >
-                <span>📝</span> {isLogging ? 'Recording Itinerary...' : 'Record Planned Itinerary to Impact Dashboard'}
+                <span>{activitySaved ? '✓' : '📝'}</span>
+                {activitySaved
+                  ? 'Redistribution Plan Recorded'
+                  : isLogging
+                  ? 'Recording Plan...'
+                  : 'Record Redistribution Plan'}
               </button>
 
               {loggedStatus && (
@@ -412,6 +545,5 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onAc
         )}
       </div>
     </section>
-
   );
 }

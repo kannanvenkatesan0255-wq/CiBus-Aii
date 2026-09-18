@@ -10,5 +10,41 @@
     "route_distance_km": 5.88,
     "status": "planned",
     "notes": "Demonstration baseline itinerary recorded during system verification."
+  },
+  {
+    "activity_id": "ACT_20260918_065206_002",
+    "timestamp": "2026-09-18T06:52:06Z",
+    "source_name": "Guindy Central Dispatch Facility",
+    "predicted_surplus_meals": 230.38,
+    "allocated_meals": 230.38,
+    "matched_ngo_count": 1,
+    "route_stop_count": 1,
+    "route_distance_km": 0.8,
+    "status": "planned",
+    "notes": "E2E automated integration test workflow"
+  },
+  {
+    "activity_id": "ACT_20260918_065226_003",
+    "timestamp": "2026-09-18T06:52:26Z",
+    "source_name": "Guindy Central Dispatch Facility",
+    "predicted_surplus_meals": 230.38,
+    "allocated_meals": 230.38,
+    "matched_ngo_count": 1,
+    "route_stop_count": 1,
+    "route_distance_km": 0.8,
+    "status": "planned",
+    "notes": "E2E automated integration test workflow"
+  },
+  {
+    "activity_id": "ACT_20260918_065341_004",
+    "timestamp": "2026-09-18T06:53:41Z",
+    "source_name": "Guindy Central Dispatch Facility",
+    "predicted_surplus_meals": 230.38,
+    "allocated_meals": 230.38,
+    "matched_ngo_count": 1,
+    "route_stop_count": 1,
+    "route_distance_km": 0.8,
+    "status": "planned",
+    "notes": "E2E automated integration test workflow"
   }
 ]

@@ -10,7 +10,7 @@ const LOCATION_PRESETS = [
   { label: 'Location Coordinates Unavailable (General Match)', lat: null, lon: null }
 ];
 
-export default function NGOMatchingSection({ predictedSurplus, onMatchesUpdated }) {
+export default function NGOMatchingSection({ predictedSurplus, onMatchesUpdated, onMatchingSuccess }) {
   const [foodType, setFoodType] = useState('Both');
   const [selectedLocationIdx, setSelectedLocationIdx] = useState(0);
   const [maxMatches, setMaxMatches] = useState(4);
@@ -46,6 +46,9 @@ export default function NGOMatchingSection({ predictedSurplus, onMatchesUpdated 
       setMatchingResult(result);
       if (onMatchesUpdated) {
         onMatchesUpdated(result.matches || []);
+      }
+      if (onMatchingSuccess) {
+        onMatchingSuccess(result);
       }
     } catch (err) {
       setError(err.message || 'Failed to match candidate recipient NGOs.');

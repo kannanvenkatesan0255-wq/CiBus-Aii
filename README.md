@@ -377,11 +377,28 @@ Food Source → Stop 1 (NGO 1) → Stop 2 (NGO 2) → Stop 3 (NGO 3)
 - **Algorithm:** Pairwise Haversine distance matrix + greedy Nearest-Neighbor (NN) sequencing starting at the food generation facility.
 - **Distinction from ML:** Route sequencing is a deterministic graph algorithm ($O(N^2)$), **NOT** a Machine Learning model.
 - **Invariants:** Total distance strictly equals sum of segment distances ($\sum d_i = D_{\text{total}}$), and total distributed meals strictly equals allocated meals ($\sum m_i = M_{\text{total}}$).
+---
 
+## 17. Complete CIBUS-AI Redistribution Workflow
+
+The application links 5 sequential stages into an integrated food recovery workflow:
+
+```
+[User Form Input] ──► [ML Surplus Forecast] ──► [NGO Capacity Matching] 
+                                                        │
+                                                        ▼
+[Impact Dashboard Telemetry] ◄── [Activity Logging] ◄── [Nearest-Neighbor Route + SVG Map]
+```
+
+1. **ML Surplus Forecast:** User provides 9 pre-service operational metrics to compute the expected surplus meals ($R^2 = 0.9543$).
+2. **Recipient NGO Matching:** Multi-criteria engine allocates portions across compatible nearby NGOs without exceeding capacity.
+3. **Nearest-Neighbor Route Planning:** Greedy TSP heuristic sequences stops starting from the food facility origin.
+4. **SVG Location & Route Visualization:** Deterministic coordinate normalization maps latitude/longitude to a 2D Cartesian SVG canvas with directional segments, distance badges, and interactive tooltips without external map SDKs.
+5. **Activity Logging & Impact Telemetry:** One-click persistence writes itineraries to the activity ledger and updates live dashboard metrics.
 
 ---
 
-## 17. Installation & Reproduction Guide
+## 18. Installation & Reproduction Guide
 
 ### 1. Environment Setup
 ```bash
@@ -424,8 +441,8 @@ python -u -m unittest ai-engine/prediction/test_predict.py
 # Start FastAPI backend development server
 uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 
-# Run automated backend API test suite (10 tests)
-python -u -m unittest backend/tests/test_prediction_api.py
+# Run all backend unit and integration test suites (43 tests)
+python -m unittest discover -s backend/tests -p "test_*.py"
 
 # Run interactive prediction CLI demo
 python -u ai-engine/prediction/predict.py --day Saturday --weather Sunny --customers 350 --meals 400 --event Regular --rating 4.3
@@ -442,20 +459,21 @@ npm install
 # Start Vite React development server
 npm run dev
 
-# Run automated frontend test suite (7 tests)
+# Run automated frontend test suite (21 tests)
 npm test
 ```
 
 ---
 
-## 17. Limitations
+## 19. Academic Scope & Limitations
 - **Synthetic Behavioral Data:** Evaluated on synthetic operational records; real-world catering establishments exhibit micro-climate and seasonal variability not fully modeled.
 - **Static Pre-Service Window:** Forecasts apply prior to food preparation and do not stream dynamic intra-shift kitchen replenishment.
-- **No Logistics Integration Yet:** Downstream NGO pairing, vehicle routing, and web UI are scheduled for subsequent project milestones.
+- **Heuristic Route Approximation:** Distances use straight-line Haversine math and greedy nearest-neighbor sequencing without live traffic, one-way road networks, or live GPS telemetry.
+- **Simulation Boundary:** Recipient NGOs and activity records are synthetic demonstration artifacts for academic evaluation.
 
 ---
 
-## 18. Repository & Author Information
+## 20. Repository & Author Information
 - **Repository:** [https://github.com/kannanvenkatesan0255-wq/CiBus-Aii.git](https://github.com/kannanvenkatesan0255-wq/CiBus-Aii.git)
 - **Institution:** Chennai Institute of Technology
 - **Course:** Machine Learning Project-Based Learning (PBL)
