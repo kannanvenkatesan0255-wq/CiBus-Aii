@@ -94,5 +94,29 @@
     "route_distance_km": 0.8,
     "status": "planned",
     "notes": "E2E automated integration test workflow"
+  },
+  {
+    "activity_id": "ACT_20260918_071950_009",
+    "timestamp": "2026-09-18T07:19:50Z",
+    "source_name": "Central Kitchen",
+    "predicted_surplus_meals": 114.78,
+    "allocated_meals": 114.78,
+    "matched_ngo_count": 1,
+    "route_stop_count": 1,
+    "route_distance_km": 0.0,
+    "status": "completed",
+    "notes": "Verified test redistribution session"
+  },
+  {
+    "activity_id": "ACT_20260918_072000_010",
+    "timestamp": "2026-09-18T07:20:00Z",
+    "source_name": "Central Kitchen",
+    "predicted_surplus_meals": 114.78,
+    "allocated_meals": 114.78,
+    "matched_ngo_count": 1,
+    "route_stop_count": 1,
+    "route_distance_km": 0.0,
+    "status": "completed",
+    "notes": "Verified test redistribution session"
   }
 ]
