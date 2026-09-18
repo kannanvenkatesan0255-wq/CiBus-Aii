@@ -63,13 +63,13 @@ To strictly prevent **data leakage**, only pre-service operational and environme
 ---
 
 ## 7. Current Development Phase
-- **Phase:** **Phase 4 – Baseline Model Training Completed**
-- **Status:** Trained baseline Random Forest Regressor (`n_estimators=100`, `random_state=42`) via `ai-engine/training/train_baseline.py`.
-- **Baseline Test Metrics:**
-  - $\text{MAE} = 14.2939$ meals
-  - $\text{RMSE} = 20.5429$ meals
-  - $R^2 = 0.9549$ (Explained Variance)
-- **Artifacts:** `ai-engine/models/baseline_food_surplus_model.pkl`, `ai-engine/evaluation/baseline_results.json`.
+- **Phase:** **Phase 5 – Model Refinement & Hyperparameter Tuning Completed**
+- **Status:** Conducted cross-validated hyperparameter optimization on `RandomForestRegressor`. Selected optimal configuration (`n_estimators=200`, `max_depth=15`, `max_features=0.8`, `min_samples_split=4`, `min_samples_leaf=1`).
+- **Refined Test Metrics (Untouched Test Partition, $N=1,600$):**
+  - $\text{MAE} = 14.5793$ meals
+  - $\text{RMSE} = 20.6869$ meals
+  - $R^2 = 0.9543$ (Explained Variance)
+- **Artifacts:** `ai-engine/models/food_surplus_model.pkl`, `ai-engine/evaluation/model_comparison.json`, `ai-engine/evaluation/model_comparison.md`.
 
 ---
 
@@ -78,8 +78,10 @@ The following modules represent subsequent milestones:
 - [x] **Data Pipeline Execution:** Synthetic dataset generation ($N=8000$) with domain-realistic variance and validation checks.
 - [x] **Data Preprocessing & Encoding Pipeline:** Train-test splitting ($80/20$), leakage-safe ColumnTransformer fitting, and artifact serialization.
 - [x] **Baseline Model Training:** Random Forest baseline training ($n=100$) and baseline benchmark logging.
-- [ ] **Final Model Training & Hyperparameter Tuning:** Cross-validation and fine-tuning.
-- [ ] **Evaluation & Diagnostic Plotting:** True vs. Predicted residual analysis, MAE, RMSE, and $R^2$ evaluation.
+- [x] **Final Model Training & Hyperparameter Tuning:** 3-Fold Cross-Validation parameter tuning, test evaluation, and baseline comparison.
+- [ ] **Evaluation & Diagnostic Plotting:** True vs. Predicted residual analysis, MAE, RMSE, and $R^2$ evaluation plots.
+- [ ] **Feature Importance Analysis:** Mean Decrease in Impurity (MDI) visualization and interpretation.
+- [ ] **Standalone Prediction Interface:** Pre-service CLI and batch inference script.
 - [ ] **NGO Matching Engine:** Distance- and capacity-aware matching algorithm (*Future Milestone*).
 - [ ] **Dynamic Route Optimization:** Multi-stop pickup and drop route planning (*Future Milestone*).
 - [ ] **Volunteer Allocation Engine:** Task dispatch system (*Future Milestone*).

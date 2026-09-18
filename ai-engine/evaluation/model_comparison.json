@@ -1,0 +1,50 @@
+{
+    "dataset": {
+        "total_records": 8000,
+        "train_samples": 6400,
+        "test_samples": 1600,
+        "features_count": 25,
+        "random_state": 42
+    },
+    "baseline_model": {
+        "name": "RandomForestRegressor (Default / Baseline)",
+        "hyperparameters": {
+            "n_estimators": 100,
+            "max_depth": null,
+            "min_samples_split": 2,
+            "min_samples_leaf": 1,
+            "max_features": 1.0,
+            "random_state": 42
+        },
+        "metrics": {
+            "mae": 14.2939,
+            "rmse": 20.5429,
+            "r2": 0.9549
+        }
+    },
+    "refined_model": {
+        "name": "RandomForestRegressor (Hyperparameter-Tuned)",
+        "hyperparameters": {
+            "n_estimators": 200,
+            "min_samples_split": 4,
+            "min_samples_leaf": 1,
+            "max_features": 0.8,
+            "max_depth": 15
+        },
+        "cv_strategy": "3-Fold Cross-Validation on Training Set",
+        "cv_best_rmse": 20.9391,
+        "metrics": {
+            "mae": 14.5793,
+            "rmse": 20.6869,
+            "r2": 0.9543
+        }
+    },
+    "comparison": {
+        "mae_delta": 0.2854,
+        "rmse_delta": 0.144,
+        "r2_delta": -0.0006,
+        "mae_improved": false,
+        "rmse_improved": false,
+        "r2_improved": false
+    }
+}
