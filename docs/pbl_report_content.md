@@ -248,17 +248,22 @@ def validate_prediction_input(input_dict: Dict[str, Any]) -> Dict[str, Any]:
 ```
 *Explanation:* Protects the deployed prediction engine against runtime data leakage and invalid out-of-bounds parameters.
 
-## 5.3 UI & Demonstration Interface
-The current implementation operates via Python API and a terminal Command-Line Interface (CLI):
+## 5.3 UI, Backend & Extended Application Modules
 
-```bash
-python ai-engine/prediction/predict.py \
-  --day Saturday --weather Sunny --customers 350 --meals 400 \
-  --festival No --event Regular --staff 12 --rating 4.3 --special 0
-```
-**Output:** `>>> Predicted Surplus Meals: 41.14 meals <<<`
+### Core ML Serving & REST Architecture
+The trained Random Forest model and pre-fitted `ColumnTransformer` are served via an asynchronous **FastAPI** REST backend (`backend/app/`):
+- `POST /api/predict`: Executes real-time inference returning forecasted surplus meals.
+- `GET /health`: Diagnostic monitor checking server and model artifact readiness.
 
-*(Note: Full web interface and dashboard represent planned future milestones).*
+### Extended Module 1: React Single-Page Web Dashboard (`frontend/`)
+A responsive, dark-glassmorphism user interface built with **React** and **Vite** allowing dining operators to input pre-service parameters, view real-time surplus forecasts, and inspect model specifications.
+
+### Extended Module 2: Rule-Based NGO Matching & Redistribution (`backend/app/services/ngo_matching_service.py`)
+> **Important Distinction:** The NGO Matching module is a deterministic, rule-based heuristic allocation component, strictly separate from the Supervised Random Forest ML model.
+
+It takes the forecasted surplus $\hat{y}$ from the ML engine and matches candidate partner organizations from a synthetic recipient directory (`backend/data/ngos.csv`) using:
+1. **Multi-Factor Heuristic Score:** Evaluates active receiving status ($35\%$), Haversine spherical transit distance ($25\%$), dietary format compatibility ($20\%$), and capacity suitability ($20\%$).
+2. **Constraint-Based Allocation:** Enforces $\text{Allocated Meals}_i \le \text{Capacity}_i$ and $\sum \text{Allocated Meals}_i \le \text{Predicted Surplus}$, preventing shelter overload.
 
 ---
 
@@ -337,7 +342,7 @@ The CIBUS-AI machine learning project successfully designed, trained, tuned, and
 By strictly preventing data leakage and providing a modular inference interface, CIBUS-AI proves the feasibility of pre-service surplus forecasting to power proactive food redistribution.
 
 ## 8.2 Future Scope
-1. **Real-World Deployment:** Partner with institutional cafeterias to ingest physical point-of-sale logs and IoT smart kitchen scales.
-2. **Automated NGO Matching Engine:** Constraint-satisfaction matching pairing surplus meal counts with NGO capacity and dietary requirements.
-3. **Dynamic Route Optimization:** Genetic algorithm / Dijkstra-based multi-stop transport route calculation.
-4. **Full-Stack Web Portal:** React frontend with FastAPI backend and live Google Maps tracking.
+1. **Real-World Deployment & Sensor Telemetry:** Partner with commercial cafeterias to ingest physical POS registers, smart kitchen bin scales, and real-time food temperature sensors.
+2. **Dynamic Multi-Stop Route Optimization:** Vehicle routing problem (VRP) solver calculating optimal multi-stop pickup and drop-off sequences for volunteer food couriers.
+3. **Automated Volunteer Dispatch & Mobile Notifications:** Push-notification system alerting nearby verified food recovery couriers for rapid transit.
+4. **Interactive GIS & Telemetry Dashboard:** Full-scale GIS mapping with live GPS driver tracking and food shelf-life countdown monitors.

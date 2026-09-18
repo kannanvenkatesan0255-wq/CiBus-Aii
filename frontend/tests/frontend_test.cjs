@@ -135,6 +135,29 @@ runTest('Verify Vite builds the production bundle cleanly', () => {
   assert.strictEqual(fs.existsSync(path.join(FRONTEND_DIR, 'dist', 'index.html')), true);
 });
 
+// Test 8: Verify NGOMatchingSection.jsx exists and displays synthetic data disclaimer
+runTest('Verify NGOMatchingSection.jsx component exists with demo data disclaimer', () => {
+  const ngoCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'NGOMatchingSection.jsx'), 'utf8');
+  assert.strictEqual(ngoCode.includes("Demo / Synthetic NGO Dataset"), true);
+  assert.strictEqual(ngoCode.includes("Recipient NGO Matching & Allocation"), true);
+});
+
+// Test 9: Verify matchNGOs API call in predictionService.js
+runTest('Verify matchNGOs API integration in predictionService.js', () => {
+  const serviceCode = fs.readFileSync(path.join(SRC_DIR, 'services', 'predictionService.js'), 'utf8');
+  assert.strictEqual(serviceCode.includes("matchNGOs"), true);
+  assert.strictEqual(serviceCode.includes("endpoint = `${API_BASE_URL}/api/match-ngos`"), true);
+});
+
+// Test 10: Verify NGOMatchingSection includes dietary and location controls
+runTest('Verify dietary and location controls in NGOMatchingSection.jsx', () => {
+  const ngoCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'NGOMatchingSection.jsx'), 'utf8');
+  assert.strictEqual(ngoCode.includes("Vegetarian"), true);
+  assert.strictEqual(ngoCode.includes("Non-Vegetarian"), true);
+  assert.strictEqual(ngoCode.includes("LOCATION_PRESETS"), true);
+  assert.strictEqual(ngoCode.includes("match_score"), true);
+});
+
 console.log(`\n----------------------------------------------------------------------`);
 console.log(`Test Execution Summary: ${passedTests} / ${totalTests} tests passed`);
 console.log(`======================================================================\n`);
@@ -144,3 +167,4 @@ if (passedTests === totalTests) {
 } else {
   process.exit(1);
 }
+

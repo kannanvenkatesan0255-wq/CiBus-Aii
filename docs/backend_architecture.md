@@ -43,6 +43,7 @@ Key architectural principles:
 |                  (backend/app/routes/prediction.py)                   |
 |                                                                       |
 |  * POST /api/predict       --> Food Surplus Forecasting               |
+|  * POST /api/match-ngos    --> Heuristic NGO Matching & Allocation     |
 |  * GET  /api/model-info    --> Active ML Metadata & Metrics           |
 +-----------------------------------+-----------------------------------+
                                     |
@@ -56,33 +57,27 @@ Key architectural principles:
 |  * Enforces: 1.0 <= Avg_Rating <= 5.0, Staff_Count >= 1               |
 |  * Sanitizes: Day, Weather, Festival, Event_Type                      |
 |  * Strict Rule: Rejects 'Meals_Sold' (Zero Data Leakage)              |
+|  * NGO Matching: predicted_surplus >= 0, lat/lon in valid ranges      |
 +-----------------------------------+-----------------------------------+
                                     |
-                                    | Validated Dictionary
+                                    | Validated Payload
                                     v
 +-----------------------------------------------------------------------+
-|                    Prediction Service Bridge                          |
-|           (backend/app/services/prediction_service.py)                |
+|                        Service Bridges                                |
 |                                                                       |
-|  * Dispatches to: ai-engine/prediction/predict.py                     |
-|  * Contextual Action Engine: Generates redistribution advice          |
+|  * PredictionService (backend/app/services/prediction_service.py)     |
+|      -> Calls ML Engine (ai-engine/prediction/predict.py)             |
+|  * NGOMatchingService (backend/app/services/ngo_matching_service.py)  |
+|      -> Evaluates Synthetic NGO Dataset (backend/data/ngos.csv)       |
+|      -> Computes Haversine distance, suitability score, and capacity  |
 +-----------------------------------+-----------------------------------+
                                     |
-                                    | Preprocessed Array
-                                    v
-+-----------------------------------------------------------------------+
-|                  CIBUS-AI Trained ML Engine                           |
-|                      (ai-engine/models/)                              |
-|                                                                       |
-|  * ColumnTransformer (food_surplus_preprocessor.pkl)                  |
-|  * RandomForestRegressor (food_surplus_model.pkl: depth=15, n=200)    |
-+-----------------------------------+-----------------------------------+
-                                    |
-                                    | Output: float >= 0.0
+                                    | Forecast / Matching Matrix
                                     v
 +-----------------------------------------------------------------------+
 |                      Structured JSON Response                         |
-|  { "predicted_surplus_meals": 230.38, "status": "success", ... }      |
+|  Prediction: { "predicted_surplus_meals": 230.38, ... }               |
+|  NGO Match:  { "matches": [...], "unallocated_meals": 0.0, ... }      |
 +-----------------------------------------------------------------------+
 ```
 
@@ -119,6 +114,18 @@ Key architectural principles:
    - $> 60$ meals: High surplus (activate regional NGO redistribution dispatch).
 7. Returns `200 OK` with `PredictionResponse`.
 
+### C. NGO Matching & Allocation Flow (`POST /api/match-ngos`)
+1. Client issues `POST /api/match-ngos` with `predicted_surplus_meals`, optional `food_type`, and optional source coordinates (`source_latitude`, `source_longitude`).
+2. Pydantic validates `predicted_surplus_meals >= 0`, latitude within $[-90, 90]$, and longitude within $[-180, 180]$.
+3. `NGOMatchingService.match_and_allocate()` queries `backend/data/ngos.csv`.
+4. Filters organizations by availability (`Available` vs `Unavailable`) and food type compatibility (`Both` matches all; specific types match identical or compatible types).
+5. Computes transparent composite suitability score:
+   $$\text{Score} = 0.35 S_{\text{avail}} + 0.25 S_{\text{dist}} + 0.20 S_{\text{compat}} + 0.20 S_{\text{cap}}$$
+6. Distributes surplus sequentially across top-ranked NGOs without exceeding individual capacities:
+   $$\text{Allocated}_i = \min(\text{Surplus}_{\text{remaining}}, \text{Capacity}_i)$$
+   Ensuring: $\sum \text{Allocated}_i \le \text{Predicted Surplus}$.
+7. Returns `200 OK` with `NGOMatchResponse` including ranked recipients, allocated portions, distances, match scores, and remaining unallocated surplus.
+
 ---
 
 ## 4. Error Handling Matrix
@@ -129,6 +136,8 @@ Key architectural principles:
 | Negative meal or customer count | `422` | Validation Error JSON | Violates physical reality constraints. |
 | Rating out of range ($<1.0$ or $>5.0$) | `422` | Validation Error JSON | Out-of-bounds restaurant rating. |
 | Presence of `Meals_Sold` | `422` | Data Leakage Violation JSON | Post-service outcome cannot enter pre-service prediction. |
+| Negative surplus in NGO matching | `422` | Validation Error JSON | Surplus meals must be non-negative. |
+| Invalid latitude/longitude coordinates | `422` | Validation Error JSON | Coordinates out of valid geographic range. |
 | Model files missing or unreadable | `503` | Service Unavailable JSON | Server artifact path or storage error. |
 | Unhandled runtime error | `500` | Internal Server Error JSON | Safe sanitized message preventing stack trace leakage. |
 
@@ -136,24 +145,19 @@ Key architectural principles:
 
 ## 5. Verification & Testing
 
-The backend is verified through an automated test suite located at `backend/tests/test_prediction_api.py`:
-- **Test 1:** Health endpoint readiness and artifact loading.
-- **Test 2:** API root metadata and navigation.
-- **Test 3:** Standard valid operational prediction execution.
-- **Test 4:** Missing required field handling.
-- **Test 5:** Negative numerical input handling.
-- **Test 6:** Out-of-bounds rating rejection.
-- **Test 7:** Invalid categorical enumeration handling.
-- **Test 8:** Strict `Meals_Sold` data leakage prevention.
-- **Test 9:** Complete response schema and metadata verification.
-- **Test 10:** Model info endpoint evaluation metrics retrieval.
+The backend is verified through automated test suites:
+- `backend/tests/test_prediction_api.py` (10 tests): Health endpoint, prediction inference, schema boundary validation, data leakage prevention, model metadata.
+- `backend/tests/test_ngo_matching.py` (10 tests): NGO capacity constraints, zero surplus, multi-NGO distribution, dietary filtering, invalid inputs.
+- `backend/tests/test_e2e_workflow.py` (1 test): Complete end-to-end integration passing real Random Forest prediction outputs directly into the NGO matching service.
 
-All 10 tests execute deterministically with 100% pass rate.
+All 21 test cases execute deterministically with 100% pass rate.
 
 ---
 
 ## 6. Current Boundaries & Limitations
-- **Stateless Inference:** The backend does not persist predictions to an external SQL/NoSQL database at this stage.
+- **Stateless Inference:** The backend does not persist predictions or matching events to an external SQL/NoSQL database at this stage.
+- **Rule-Based Matching:** NGO matching is purely deterministic and heuristic; it does not utilize machine learning.
+- **Synthetic NGO Dataset:** NGO profiles are synthetic demo representations for academic prototyping.
 - **Zero Retraining:** The backend strictly consumes the trained model; online learning or automatic continuous retraining is intentionally avoided to preserve reproducibility.
 
 ---
@@ -165,3 +169,4 @@ The React/Vite web application (`frontend/`) interacts seamlessly with the FastA
 2. **Prediction Submission:** The `PredictionForm.jsx` component collects 9 operational parameters, validates domain bounds on the client, and sends `POST /api/predict`.
 3. **CORS Configuration:** The backend CORS middleware permits communication from Vite development origins (`http://localhost:5173` and `http://127.0.0.1:5173`).
 4. **Result Rendering:** The `ResultCard.jsx` component displays the forecast, model metadata, and logistics recommendations returned by the backend.
+5. **Redistribution Planning:** The `NGOMatchingSection.jsx` component consumes the predicted surplus from the ResultCard, presents optional dietary and location filters, and queries `POST /api/match-ngos` to display matched recipient organizations and capacity allocations.

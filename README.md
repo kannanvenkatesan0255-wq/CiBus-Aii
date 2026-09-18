@@ -213,7 +213,21 @@ A responsive single-page web dashboard built with **React**, **Vite**, and a dar
 
 ---
 
-## 15. Project Directory Structure
+## 15. NGO Matching & Redistribution Planning Module
+
+An extended rule-based capacity distribution module that connects the quantitative Machine Learning forecast to nearby partner charities and community shelters.
+
+### Redistribution Flow:
+$$\text{Predicted Surplus} \longrightarrow \text{NGO Availability} \longrightarrow \text{Capacity Bounds} \longrightarrow \text{Food Compatibility} \longrightarrow \text{Proximity Distance} \longrightarrow \text{Composite Score} \longrightarrow \text{Recommended Allocation}$$
+
+### Key Allocation Invariants:
+1. $\text{Allocated Meals}_i \le \text{Capacity}_i$ (Never exceeds shelter capacity).
+2. $\sum \text{Allocated Meals}_i \le \text{Predicted Surplus Meals}$ (Never creates phantom meals).
+3. $\text{Total Allocated} + \text{Unallocated Balance} = \text{Predicted Surplus}$.
+
+---
+
+## 16. Project Directory Structure
 ```
 CIBUS-AI/
 ├── ai-engine/
@@ -261,23 +275,29 @@ CIBUS-AI/
 │   │   ├── main.py                      # FastAPI app entry point, CORS & health check
 │   │   ├── schemas.py                   # Pydantic input/output schemas & validation
 │   │   ├── services/
-│   │   │   └── prediction_service.py    # Service layer bridging FastAPI to ML engine
+│   │   │   ├── prediction_service.py    # Service layer bridging FastAPI to ML engine
+│   │   │   └── ngo_matching_service.py  # Rule-based NGO matching & allocation
 │   │   └── routes/
-│   │       └── prediction.py            # Prediction and model metadata REST routes
+│   │       ├── prediction.py            # Prediction and model metadata REST routes
+│   │       └── ngo_matching.py          # NGO matching & redistribution route
+│   ├── data/
+│   │   └── ngos.csv                     # Synthetic partner NGO dataset
 │   ├── tests/
-│   │   └── test_prediction_api.py       # Automated API test suite (10 tests passing)
+│   │   ├── test_prediction_api.py       # Prediction API test suite (10 tests passing)
+│   │   ├── test_ngo_matching.py         # NGO matching test suite (10 tests passing)
+│   │   └── test_e2e_workflow.py         # Complete end-to-end integration test
 │   ├── requirements.txt                 # Backend dependencies
 │   └── README.md                        # Backend documentation
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/                  # Header, Hero, Form, ResultCard, Roadmap
+│   │   ├── components/                  # Header, Hero, Form, ResultCard, NGOMatching, Roadmap
 │   │   ├── services/                    # predictionService.js API bridge
 │   │   ├── styles/                      # index.css & App.css design system
 │   │   ├── App.jsx                      # Main dashboard layout
 │   │   └── main.jsx                     # React DOM root
 │   ├── tests/
-│   │   └── frontend_test.cjs            # Automated frontend test runner (7 tests)
+│   │   └── frontend_test.cjs            # Automated frontend test runner (10 tests passing)
 │   ├── package.json                     # Vite & React dependencies
 │   ├── vite.config.js                   # Proxy & dev server config
 │   ├── .env.example                     # Environment template
@@ -290,6 +310,7 @@ CIBUS-AI/
 │   ├── prediction_documentation.md      # Inference guide & API reference
 │   ├── backend_architecture.md          # Backend integration & API design
 │   ├── frontend_architecture.md         # Frontend design & component flow
+│   ├── ngo_matching.md                  # NGO matching & redistribution logistics
 │   ├── pbl_report_content.md            # Chennai Institute of Tech PBL Report
 │   ├── references.md                    # IEEE formatted reference list
 │   ├── appendix.md                      # Code & experimental appendix
@@ -303,7 +324,7 @@ CIBUS-AI/
 
 ---
 
-## 16. Installation & Reproduction Guide
+## 17. Installation & Reproduction Guide
 
 ### 1. Environment Setup
 ```bash

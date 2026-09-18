@@ -115,3 +115,51 @@ export async function getModelMetadata() {
     return null;
   }
 }
+
+/**
+ * Matches candidate recipient NGOs for a predicted surplus meal volume.
+ * 
+ * @param {Object} matchParams - { predicted_surplus_meals, food_type, source_latitude, source_longitude, max_matches }
+ * @returns {Promise<Object>} Matching and capacity allocation response
+ */
+export async function matchNGOs(matchParams) {
+  const endpoint = `${API_BASE_URL}/api/match-ngos`;
+
+  const payload = {
+    predicted_surplus_meals: parseFloat(matchParams.predicted_surplus_meals || 0),
+    food_type: matchParams.food_type || "Both",
+    source_latitude: matchParams.source_latitude ? parseFloat(matchParams.source_latitude) : null,
+    source_longitude: matchParams.source_longitude ? parseFloat(matchParams.source_longitude) : null,
+    max_matches: parseInt(matchParams.max_matches || 5, 10)
+  };
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Matching service error (HTTP ${response.status})`;
+      try {
+        const errData = await response.json();
+        if (errData.detail) errorMessage = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
+      } catch {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error("Unable to connect to CIBUS-AI NGO Matching API. Please ensure the backend is running.");
+    }
+    throw error;
+  }
+}
+

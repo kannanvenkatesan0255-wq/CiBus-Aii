@@ -185,3 +185,84 @@ class HealthResponse(BaseModel):
     model_loaded: bool
     preprocessor_loaded: bool
     version: str
+
+
+class NGOMatchRequest(BaseModel):
+    """
+    Input schema for matching surplus food with recipient organizations.
+    """
+    predicted_surplus_meals: float = Field(
+        ...,
+        ge=0.0,
+        description="Predicted quantity of excess meals to redistribute",
+        examples=[230.4]
+    )
+    food_type: Optional[str] = Field(
+        default="Both",
+        description="Dietary classification of prepared food (Both, Vegetarian, Non-Vegetarian)",
+        examples=["Both"]
+    )
+    source_latitude: Optional[float] = Field(
+        default=None,
+        ge=-90.0,
+        le=90.0,
+        description="Latitude of food-generating establishment (optional for distance calculation)",
+        examples=[12.9716]
+    )
+    source_longitude: Optional[float] = Field(
+        default=None,
+        ge=-180.0,
+        le=180.0,
+        description="Longitude of food-generating establishment (optional for distance calculation)",
+        examples=[80.2000]
+    )
+    max_matches: Optional[int] = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum number of candidate recipient NGOs to allocate",
+        examples=[5]
+    )
+
+    @field_validator("food_type")
+    @classmethod
+    def validate_food_type(cls, v: Optional[str]) -> str:
+        if not v:
+            return "Both"
+        cleaned = str(v).strip().capitalize()
+        if cleaned in ["Veg", "Vegetarian"]:
+            return "Vegetarian"
+        if cleaned in ["Non-veg", "Non-vegetarian", "Nonveg"]:
+            return "Non-Vegetarian"
+        return "Both"
+
+
+class NGOMatchItem(BaseModel):
+    """
+    Individual matched NGO recipient details and capacity allocation.
+    """
+    ngo_id: str
+    ngo_name: str
+    area: str
+    capacity_meals: int
+    allocated_meals: float
+    people_served: int
+    food_type: str
+    availability_status: str
+    distance_km: Optional[float]
+    match_score: float
+    reason: str
+
+
+class NGOMatchResponse(BaseModel):
+    """
+    Response schema detailing allocated recipient organizations and remaining balance.
+    """
+    predicted_surplus_meals: float
+    total_allocated_meals: float
+    unallocated_meals: float
+    matched_count: int
+    matches: List[NGOMatchItem]
+    status: str
+    message: str
+

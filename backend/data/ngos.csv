@@ -1,0 +1,13 @@
+NGO_ID,NGO_Name,Area,Latitude,Longitude,Capacity_Meals,People_Served,Food_Type,Contact_Available,Availability_Status
+NGO001,Annam Food Rescue Foundation,Tambaram,12.9249,80.1000,250,200,Both,Yes,Available
+NGO002,Karuna Community Kitchen,Guindy,13.0067,80.2025,180,150,Vegetarian,Yes,Available
+NGO003,Hope City Shelter & Relief,Adyar,13.0012,80.2565,300,280,Both,Yes,Available
+NGO004,Annapoorna Seva Trust,Velachery,12.9759,80.2212,120,100,Vegetarian,Yes,Available
+NGO005,Smile Care Children Home,Chromepet,12.9516,80.1462,80,75,Both,Yes,Available
+NGO006,Shanti Night Shelter,Egmore,13.0827,80.2707,200,180,Both,Yes,Available
+NGO007,Uthavum Karangal Center,T. Nagar,13.0418,80.2341,150,140,Both,Yes,Limited
+NGO008,Jeeva Jyothi Food Aid,Porur,13.0382,80.1565,220,190,Both,Yes,Available
+NGO009,Akshaya Care Home,Perungudi,12.9654,80.2461,160,130,Vegetarian,Yes,Available
+NGO10,Mother Teresa Relief Center,Koyambedu,13.0694,80.1948,350,300,Both,Yes,Available
+NGO011,Seva Bharathi Community Meals,Mylapore,13.0368,80.2676,140,120,Vegetarian,Yes,Available
+NGO012,Nourish Youth Orphanage,Pallavaram,12.9675,80.1491,90,85,Both,Yes,Unavailable

@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import PredictionForm from './components/PredictionForm';
 import ResultCard from './components/ResultCard';
+import NGOMatchingSection from './components/NGOMatchingSection';
 import HowItWorks from './components/HowItWorks';
 import FutureModules from './components/FutureModules';
 import Footer from './components/Footer';
@@ -55,6 +56,11 @@ export default function App() {
             isLoading={isLoading}
           />
         </div>
+
+        {/* Extended Redistribution Module (Active when prediction exists or accessible for demo) */}
+        <NGOMatchingSection
+          predictedSurplus={prediction ? prediction.predicted_surplus_meals : 0}
+        />
 
         <HowItWorks />
         <FutureModules />

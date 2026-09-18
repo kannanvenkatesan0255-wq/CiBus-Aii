@@ -55,8 +55,9 @@ The CIBUS-AI frontend is engineered as a responsive, reactive single-page dashbo
 | **`Hero`** | `src/components/Hero.jsx` | Explains the mission of the Food Surplus Prediction module and frames the problem context. |
 | **`PredictionForm`** | `src/components/PredictionForm.jsx` | Houses the 9 input form controls, performs pre-flight boundary validation, and emits `onSubmit` events. |
 | **`ResultCard`** | `src/components/ResultCard.jsx` | Renders a placeholder in idle state, a processing animation during submission, and a prominent quantitative card upon forecast arrival. |
+| **`NGOMatchingSection`** | `src/components/NGOMatchingSection.jsx` | Provides dietary filter, location presets, rule-based candidate ranking, and capacity allocation visualization cards. |
 | **`HowItWorks`** | `src/components/HowItWorks.jsx` | Outlines the end-to-end operational flow from kitchen parameter entry to redistribution dispatch. |
-| **`FutureModules`** | `src/components/FutureModules.jsx` | Outlines the post-PBL roadmap (NGO pairing, routing heuristics, GIS tracking) to clearly mark feature boundaries. |
+| **`FutureModules`** | `src/components/FutureModules.jsx` | Outlines the post-PBL roadmap (vehicle routing, volunteer dispatch, GIS tracking) to clearly mark feature boundaries. |
 | **`Footer`** | `src/components/Footer.jsx` | Displays institutional attribution for Chennai Institute of Technology. |
 
 ---
