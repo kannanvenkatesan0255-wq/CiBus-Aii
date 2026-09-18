@@ -70,20 +70,14 @@ $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar
 
 ### Iteration 1: Baseline Random Forest Model
 - **Configuration:** `n_estimators=100`, `max_depth=None`, `min_samples_split=2`, `min_samples_leaf=1`, `max_features=1.0`, `random_state=42`.
-- **Test Performance:**
+- **Test Performance ($N=1,600$):**
   - **MAE:** `14.2939 meals`
   - **RMSE:** `20.5429 meals`
   - **$R^2$ Score:** `0.9549`
 
 ### Iteration 2: Hyperparameter Optimization & Refined Model
 - **Refinement Motivation:** Investigate whether constraining tree depth, tuning split minimums, and sub-sampling features optimizes variance control on unseen data.
-- **Hyperparameter Search Space Considered:**
-  - `n_estimators`: `[100, 150, 200]`
-  - `max_depth`: `[None, 15, 25]`
-  - `min_samples_split`: `[2, 4, 8]`
-  - `min_samples_leaf`: `[1, 2, 4]`
-  - `max_features`: `['sqrt', 0.8, 1.0]`
-- **Cross-Validation Strategy:** 3-Fold Cross-Validation strictly on the training partition ($X_{\text{train}}$) using `neg_root_mean_squared_error` scoring. The test partition ($X_{\text{test}}$) was never touched during parameter selection.
+- **Cross-Validation Strategy:** 3-Fold Cross-Validation strictly on the training partition ($X_{\text{train}}$) using `neg_root_mean_squared_error` scoring.
 - **Best Selected Hyperparameters:**
   - `n_estimators`: `200`
   - `max_depth`: `15`
@@ -91,7 +85,7 @@ $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar
   - `min_samples_leaf`: `1`
   - `max_features`: `0.8`
   - *Best 3-Fold CV RMSE:* `20.9391 meals`
-- **Test Performance (Evaluated on held-out test set $N = 1,600$):**
+- **Test Performance ($N=1,600$):**
   - **MAE:** `14.5793 meals`
   - **RMSE:** `20.6869 meals`
   - **$R^2$ Score:** `0.9543`
@@ -106,7 +100,60 @@ $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar
 | **RMSE** | 20.5429 meals | **20.6869 meals** | $+0.1440$ meals | Highly comparable residual variance. |
 | **$R^2$** | 0.9549 | **0.9543** | $-0.0006$ | Both models consistently explain $>95.4\%$ variance. |
 
-### Engineering Takeaway:
-- Both the baseline and refined models perform with high consistency ($R^2 > 0.954$), indicating that the operational feature space possesses strong predictive power.
-- The refined model with `max_depth=15` and `max_features=0.8` provides a more regularized, memory-efficient tree ensemble (40.4 MB vs 57.9 MB) while maintaining virtually identical predictive fidelity.
-- All baseline and final artifacts are preserved in `ai-engine/models/` and logged in `ai-engine/evaluation/model_comparison.json`.
+---
+
+## 8. Feature Importance Analysis *(MDI Extraction)*
+
+### 1. Purpose of Feature Importance Analysis
+In a Machine Learning PBL project, model interpretability is vital for validating that the predictive engine relies on logical operational relationships rather than spurious artifacts, and for providing actionable operational insights to kitchen managers and food recovery coordinators.
+
+### 2. Method Used
+- **Algorithm Metric:** Mean Decrease in Impurity (MDI), computed across all 200 trees in the trained Random Forest ensemble.
+- **Model Evaluated:** `ai-engine/models/food_surplus_model.pkl`.
+- **Target:** `Surplus_Meals` (Leakage-free, `Meals_Sold` strictly omitted).
+
+### 3. Actual Ranked Feature Importance Results
+
+#### Transformed Feature Importances (Top 12):
+| Rank | Transformed Feature | Importance (MDI) | Category |
+| :-: | :--- | :---: | :--- |
+| 1 | `Meals_Prepared` | **0.4896** (48.96%) | Numerical (Batch production volume) |
+| 2 | `Staff_Count` | **0.1166** (11.66%) | Numerical (Kitchen scale & capacity) |
+| 3 | `Weather_Stormy` | **0.1093** (10.93%) | Categorical One-Hot (Disruption factor) |
+| 4 | `Event_Type_Regular` | **0.0647** (6.47%) | Categorical One-Hot (Service format) |
+| 5 | `Event_Type_Buffet` | **0.0564** (5.64%) | Categorical One-Hot (Service format) |
+| 6 | `Weather_Rainy` | **0.0387** (3.87%) | Categorical One-Hot (Disruption factor) |
+| 7 | `Event_Type_Banquet` | **0.0343** (3.43%) | Categorical One-Hot (Service format) |
+| 8 | `Customers_Forecast` | **0.0246** (2.46%) | Numerical (Planned attendance) |
+| 9 | `Festival_No` | **0.0216** (2.16%) | Categorical One-Hot (Calendar baseline) |
+| 10 | `Event_Type_Corporate` | **0.0097** (0.97%) | Categorical One-Hot (Service format) |
+| 11 | `Special_Event` | **0.0079** (0.79%) | Binary Indicator |
+| 12 | `Weather_Sunny` | **0.0077** (0.77%) | Categorical One-Hot (Baseline weather) |
+
+#### Aggregated Logical Feature Importances (All 9 Features):
+| Rank | Original Feature | Aggregated Importance | Cumulative Share |
+| :-: | :--- | :---: | :---: |
+| 1 | **`Meals_Prepared`** | **0.4896** (48.96%) | 48.96% |
+| 2 | **`Event_Type`** | **0.1651** (16.51%) | 65.47% |
+| 3 | **`Weather`** | **0.1603** (16.03%) | 81.50% |
+| 4 | **`Staff_Count`** | **0.1166** (11.66%) | 93.16% |
+| 5 | **`Customers_Forecast`** | **0.0246** (2.46%) | 95.62% |
+| 6 | **`Festival`** | **0.0238** (2.38%) | 98.00% |
+| 7 | **`Special_Event`** | **0.0079** (0.79%) | 98.79% |
+| 8 | **`Avg_Rating`** | **0.0072** (0.72%) | 99.51% |
+| 9 | **`Day`** | **0.0048** (0.48%) | 100.00% |
+
+### 4. Domain Interpretation of Key Features
+1. **`Meals_Prepared` (48.96%):** As the primary physical scale driver, the total volume of food batch-cooked dictates the absolute upper bound and scale of potential leftover variance.
+2. **`Event_Type` (16.51%):** Service format heavily governs leftover probability: buffets and banquets require high continuous safety buffer presentation, whereas regular dining allows portion control.
+3. **`Weather` (16.03%, specifically `Weather_Stormy` 10.93%):** Severe weather acts as a major external demand shock that sharply reduces walk-in footfall below forecasts, creating large unexpected surpluses.
+4. **`Staff_Count` (11.66%):** Serves as an operational proxy for kitchen throughput and commercial scale.
+
+### 5. Methodological Limitations of Feature Importance
+
+> [!IMPORTANT]
+> **Causation vs. Correlation:** Feature importance indicates how useful a feature was to the trained model's predictive decisions; it does **not** establish a causal relationship.
+
+- **Impurity Bias:** MDI feature importance can favor continuous numerical variables (`Meals_Prepared`, `Staff_Count`) over one-hot binary flags because continuous features offer more candidate split points.
+- **Correlated Splitting:** When features are correlated (e.g., `Customers_Forecast` and `Meals_Prepared`), the ensemble splits importance across them, which can lower individual MDI scores for collinear features.
+- **Visual Evidence:** Diagnostic plot exported at `ai-engine/plots/feature_importance.png` and full ranking table logged in `ai-engine/evaluation/feature_importance.csv`.

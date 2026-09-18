@@ -1,0 +1,26 @@
+Rank,Feature,Importance
+1,Meals_Prepared,0.489584
+2,Staff_Count,0.11663
+3,Weather_Stormy,0.109298
+4,Event_Type_Regular,0.064735
+5,Event_Type_Buffet,0.056405
+6,Weather_Rainy,0.038693
+7,Event_Type_Banquet,0.034254
+8,Customers_Forecast,0.024648
+9,Festival_No,0.021554
+10,Event_Type_Corporate,0.00975
+11,Special_Event,0.00792
+12,Weather_Sunny,0.007736
+13,Avg_Rating,0.007155
+14,Weather_Cloudy,0.004555
+15,Day_Friday,0.000809
+16,Day_Wednesday,0.000758
+17,Day_Saturday,0.000718
+18,Day_Sunday,0.000686
+19,Day_Thursday,0.00064
+20,Festival_Christmas,0.000631
+21,Day_Monday,0.000628
+22,Festival_New Year,0.000612
+23,Festival_Diwali,0.000583
+24,Day_Tuesday,0.000558
+25,Festival_Eid,0.000462

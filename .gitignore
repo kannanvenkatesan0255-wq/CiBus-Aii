@@ -23,9 +23,10 @@ ai-engine/dataset/*.scratch.csv
 !ai-engine/dataset/food_surplus.csv
 !ai-engine/dataset/.gitkeep
 
-# Generated Evaluation Plots & Logs
-ai-engine/plots/*.png
-ai-engine/plots/*.jpg
+# Evaluation Plots & Logs
+ai-engine/plots/*.tmp.png
+!ai-engine/plots/feature_importance.png
+!ai-engine/plots/actual_vs_predicted.png
 !ai-engine/plots/.gitkeep
 *.log
 

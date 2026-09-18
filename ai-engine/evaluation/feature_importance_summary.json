@@ -1,0 +1,182 @@
+{
+    "model_name": "RandomForestRegressor",
+    "model_file": "food_surplus_model.pkl",
+    "target_variable": "Surplus_Meals",
+    "total_transformed_features": 25,
+    "total_raw_features": 9,
+    "total_importance_sum": 1.0,
+    "ranked_transformed_features": [
+        {
+            "Feature": "Meals_Prepared",
+            "Importance": 0.489584,
+            "Rank": 1
+        },
+        {
+            "Feature": "Staff_Count",
+            "Importance": 0.11663,
+            "Rank": 2
+        },
+        {
+            "Feature": "Weather_Stormy",
+            "Importance": 0.109298,
+            "Rank": 3
+        },
+        {
+            "Feature": "Event_Type_Regular",
+            "Importance": 0.064735,
+            "Rank": 4
+        },
+        {
+            "Feature": "Event_Type_Buffet",
+            "Importance": 0.056405,
+            "Rank": 5
+        },
+        {
+            "Feature": "Weather_Rainy",
+            "Importance": 0.038693,
+            "Rank": 6
+        },
+        {
+            "Feature": "Event_Type_Banquet",
+            "Importance": 0.034254,
+            "Rank": 7
+        },
+        {
+            "Feature": "Customers_Forecast",
+            "Importance": 0.024648,
+            "Rank": 8
+        },
+        {
+            "Feature": "Festival_No",
+            "Importance": 0.021554,
+            "Rank": 9
+        },
+        {
+            "Feature": "Event_Type_Corporate",
+            "Importance": 0.00975,
+            "Rank": 10
+        },
+        {
+            "Feature": "Special_Event",
+            "Importance": 0.00792,
+            "Rank": 11
+        },
+        {
+            "Feature": "Weather_Sunny",
+            "Importance": 0.007736,
+            "Rank": 12
+        },
+        {
+            "Feature": "Avg_Rating",
+            "Importance": 0.007155,
+            "Rank": 13
+        },
+        {
+            "Feature": "Weather_Cloudy",
+            "Importance": 0.004555,
+            "Rank": 14
+        },
+        {
+            "Feature": "Day_Friday",
+            "Importance": 0.000809,
+            "Rank": 15
+        },
+        {
+            "Feature": "Day_Wednesday",
+            "Importance": 0.000758,
+            "Rank": 16
+        },
+        {
+            "Feature": "Day_Saturday",
+            "Importance": 0.000718,
+            "Rank": 17
+        },
+        {
+            "Feature": "Day_Sunday",
+            "Importance": 0.000686,
+            "Rank": 18
+        },
+        {
+            "Feature": "Day_Thursday",
+            "Importance": 0.00064,
+            "Rank": 19
+        },
+        {
+            "Feature": "Festival_Christmas",
+            "Importance": 0.000631,
+            "Rank": 20
+        },
+        {
+            "Feature": "Day_Monday",
+            "Importance": 0.000628,
+            "Rank": 21
+        },
+        {
+            "Feature": "Festival_New Year",
+            "Importance": 0.000612,
+            "Rank": 22
+        },
+        {
+            "Feature": "Festival_Diwali",
+            "Importance": 0.000583,
+            "Rank": 23
+        },
+        {
+            "Feature": "Day_Tuesday",
+            "Importance": 0.000558,
+            "Rank": 24
+        },
+        {
+            "Feature": "Festival_Eid",
+            "Importance": 0.000462,
+            "Rank": 25
+        }
+    ],
+    "ranked_aggregated_features": [
+        {
+            "Original_Feature": "Meals_Prepared",
+            "Aggregated_Importance": 0.4896,
+            "Rank": 1
+        },
+        {
+            "Original_Feature": "Event_Type",
+            "Aggregated_Importance": 0.1651,
+            "Rank": 2
+        },
+        {
+            "Original_Feature": "Weather",
+            "Aggregated_Importance": 0.1603,
+            "Rank": 3
+        },
+        {
+            "Original_Feature": "Staff_Count",
+            "Aggregated_Importance": 0.1166,
+            "Rank": 4
+        },
+        {
+            "Original_Feature": "Customers_Forecast",
+            "Aggregated_Importance": 0.0246,
+            "Rank": 5
+        },
+        {
+            "Original_Feature": "Festival",
+            "Aggregated_Importance": 0.0238,
+            "Rank": 6
+        },
+        {
+            "Original_Feature": "Special_Event",
+            "Aggregated_Importance": 0.0079,
+            "Rank": 7
+        },
+        {
+            "Original_Feature": "Avg_Rating",
+            "Aggregated_Importance": 0.0072,
+            "Rank": 8
+        },
+        {
+            "Original_Feature": "Day",
+            "Aggregated_Importance": 0.0048,
+            "Rank": 9
+        }
+    ]
+}
