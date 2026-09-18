@@ -63,16 +63,16 @@ To strictly prevent **data leakage**, only pre-service operational and environme
 ---
 
 ## 7. Current Development Phase
-- **Phase:** **Phase 2 – Dataset Generation & Validation Completed**
-- **Status:** Generated and validated `ai-engine/dataset/food_surplus.csv` ($N = 8,000$ rows, 10 columns, 0 missing values, 0 duplicates).
-- **Scope Note:** Dataset is leakage-free (omits `Meals_Sold`). No ML models have been trained and no performance metrics have been fabricated at this stage.
+- **Phase:** **Phase 3 – Data Preprocessing & Encoding Pipeline Completed**
+- **Status:** Implemented reusable, leakage-safe preprocessing pipeline in `ai-engine/preprocessing/preprocess.py`. Transformed $X_{\text{train}}$ ($6,400 \times 25$) and $X_{\text{test}}$ ($1,600 \times 25$) with One-Hot categorical encodings and serialized `models/preprocessor.joblib`.
+- **Scope Note:** No ML models have been trained and no performance metrics have been fabricated at this stage.
 
 ---
 
 ## 8. Future Modules *(Planned Future Work)*
 The following modules represent subsequent milestones:
 - [x] **Data Pipeline Execution:** Synthetic dataset generation ($N=8000$) with domain-realistic variance and validation checks.
-- [ ] **Data Preprocessing & Encoding Pipeline:** Train-test splitting ($80/20$) and categorical encoding serialization.
+- [x] **Data Preprocessing & Encoding Pipeline:** Train-test splitting ($80/20$), leakage-safe ColumnTransformer fitting, and artifact serialization.
 - [ ] **Model Training & Hyperparameter Tuning:** Baseline vs. Random Forest training with cross-validation.
 - [ ] **Evaluation & Diagnostic Plotting:** True vs. Predicted residual analysis, MAE, RMSE, and $R^2$ evaluation.
 - [ ] **NGO Matching Engine:** Distance- and capacity-aware matching algorithm (*Future Milestone*).

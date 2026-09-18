@@ -50,42 +50,34 @@ The `food_surplus.csv` dataset provides structured supervised training records r
 
 ---
 
-## 4. How the Synthetic Data Was Generated
+## 4. Preprocessing & Feature Transformation Pipeline
 
-The dataset generation script (`ai-engine/dataset/generate_dataset.py`) utilizes a parameterized behavioral synthesis model:
-1. **Operational Scaling:** `Customers_Forecast` is drawn based on day-of-week and event type distributions.
-2. **Buffer Modeling:** `Meals_Prepared` is calculated from forecast with domain-realistic safety buffers (Buffets/Banquets maintain +15% to +38% safety buffer, Corporate maintains tighter +6% to +18% margins).
-3. **Compound Surplus Formation:** `Surplus_Meals` is computed without using post-facto sales, incorporating:
-   - *Baseline buffer surplus:* Expected excess between preparation and planned demand.
-   - *Weather disruptions:* Severe storms (+20% to +35%) and heavy rain (+8% to +18%) that diminish footfall.
-   - *Event format structural waste:* Continuous full display requirements in buffets and banquets.
-   - *Rating penalty:* Dissatisfaction factors when historical rating falls below 3.8.
-   - *Multi-variable interaction terms:* Compound effects (e.g., Stormy weather $\times$ Banquet format).
-   - *Controlled stochastic Gaussian noise:* $\epsilon \sim \mathcal{N}(0, 6.5^2)$ to model natural real-world unobserved behavioral entropy.
-4. **Physical Bounds:** Strictly bounded such that $\text{Surplus\_Meals} \ge 0.0$ and $\text{Surplus\_Meals} \le 0.85 \times \text{Meals\_Prepared}$.
+The data preprocessing engine is implemented in `ai-engine/preprocessing/preprocess.py`:
 
----
+```
+Raw CSV (8000 x 10)
+        │
+        ├── Step 1: Data Integrity & Leakage Validation (Verify 0 nulls, 0 dups, NO Meals_Sold)
+        ├── Step 2: Feature / Target Isolation (X: 9 features, y: Surplus_Meals)
+        ├── Step 3: Train-Test Partitioning (80% Train [6400], 20% Test [1600], seed=42)
+        ├── Step 4: Fit ColumnTransformer ONLY on X_train
+        │       ├── Categorical: OneHotEncoder (20 binary columns, handle_unknown='ignore')
+        │       └── Numerical: Passthrough (5 columns, preserves physical meal counts)
+        ├── Step 5: Transform X_train -> (6400 x 25), Transform X_test -> (1600 x 25)
+        └── Step 6: Serialize Preprocessor -> ai-engine/models/preprocessor.joblib
+```
 
-## 5. Why Synthetic Data is Used
-1. **Privacy & Commercial Sensitivity:** Commercial food providers rarely publish granular shift-by-shift surplus and waste metrics due to brand perception and liability concerns.
-2. **Controlled Experimental Design:** Enables testing non-linear regression response under known statistical interaction conditions.
-3. **Rapid Academic Prototyping:** Provides a robust, leak-free benchmark dataset for PBL development without reliance on incomplete third-party web scrapers.
-
----
-
-## 6. Critical Data-Leakage Prevention Rule
-
-### The `Meals_Sold` Exclusion Rule
-In catering accounting, actual leftover is defined post-event as:
-$$\text{Surplus\_Meals} = \text{Meals\_Prepared} - \text{Meals\_Sold}$$
-
-**Why `Meals_Sold` is Strictly Omitted:**
-1. **Target Leakage:** Including `Meals_Sold` reduces the machine learning problem to trivial arithmetic, preventing the model from discovering real behavioral interactions.
-2. **Temporal Invalidity:** `Meals_Sold` is only known **after** service closure. A model requiring `Meals_Sold` cannot make pre-service advance predictions needed to coordinate timely NGO food redistribution.
+### Transformed Feature Schema (25 Features):
+1. `Day_Friday`, `Day_Monday`, `Day_Saturday`, `Day_Sunday`, `Day_Thursday`, `Day_Tuesday`, `Day_Wednesday` (7 columns)
+2. `Weather_Cloudy`, `Weather_Rainy`, `Weather_Stormy`, `Weather_Sunny` (4 columns)
+3. `Festival_Christmas`, `Festival_Diwali`, `Festival_Eid`, `Festival_New Year`, `Festival_No` (5 columns)
+4. `Event_Type_Banquet`, `Event_Type_Buffet`, `Event_Type_Corporate`, `Event_Type_Regular` (4 columns)
+5. `Customers_Forecast`, `Meals_Prepared`, `Staff_Count`, `Avg_Rating`, `Special_Event` (5 numeric columns)
 
 ---
 
-## 7. Limitations of Synthetic Data
-- **Distributional Assumptions:** Underlying parameters assume stationary seasonal habits; sudden macro-economic shifts or supply chain shortages are not modeled.
-- **Micro-climate Granularity:** Weather is modeled categorically rather than through localized continuous meteorological measurements (e.g., millimeter precipitation, humidity).
-- **Homogeneous Menu Profile:** All meal portions are treated as standardized aggregate meal units rather than itemized per-dish perishability profiles.
+## 5. Critical Data-Leakage Prevention Rules
+
+1. **`Meals_Sold` Exclusion:** `Meals_Sold` is strictly omitted from the dataset and preprocessing pipeline.
+2. **Train-First Preprocessing Fit:** Preprocessing encodings are fitted **exclusively on the training partition ($X_{\text{train}}$)**. The test set ($X_{\text{test}}$) and subsequent real-time inference inputs are only transformed using the pre-fitted transformer, ensuring zero data snooping from test samples into the training pipeline.
+3. **Reusability in Prediction:** The exact fitted `ColumnTransformer` is persisted as `preprocessor.joblib` to guarantee identical feature dimension, category ordering, and handling of unseen values during live inference.
