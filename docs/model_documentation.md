@@ -36,9 +36,6 @@ Random Forest is an ensemble learning method based on **Bagging (Bootstrap Aggre
   - $X_{\text{test}}$ is transformed using the pre-fitted transformer without re-fitting.
   - The fitted preprocessor is serialized to `ai-engine/models/food_surplus_preprocessor.pkl`.
 
-### Reusability in Production Inference
-In real-world inference (`predict.py`), individual JSON/dictionary inputs are passed into `transform_single_input()`. Using the persisted preprocessor guarantees that categorical one-hot vectors always map to the identical 25-feature dimensional ordering expected by the trained model.
-
 ---
 
 ## 4. Evaluation Metrics Definition
@@ -47,15 +44,15 @@ Regression models are evaluated using the following formal metrics:
 
 ### 1. Mean Absolute Error (MAE)
 $$\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|$$
-- Measures the average absolute magnitude of prediction errors in the original physical units (meals).
+- Measures average absolute prediction error magnitude in real physical meal units.
 
 ### 2. Root Mean Squared Error (RMSE)
 $$\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}$$
-- Measures the standard deviation of prediction residuals, penalizing larger deviations quadratically.
+- Measures standard deviation of residuals, penalizing larger deviations quadratically.
 
 ### 3. Coefficient of Determination ($R^2$ Score)
 $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}$$
-- Quantifies the proportion of target variance explained by input features relative to a naive mean predictor ($\bar{y}$).
+- Quantifies the proportion of target variance explained by input features relative to a naive mean predictor.
 
 ---
 
@@ -104,47 +101,59 @@ $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar
 
 ## 8. Feature Importance Analysis *(MDI Extraction)*
 
-### Summary of Key Feature Drivers:
 - **`Meals_Prepared` (48.96%):** Primary scale driver setting the absolute surplus ceiling.
 - **`Event_Type` (16.51%):** Buffet/Banquet display formats vs. portion-controlled regular dining.
 - **`Weather` (16.03%, `Weather_Stormy`: 10.93%):** Footfall disruption shocks.
 - **`Staff_Count` (11.66%):** Kitchen throughput and operational capacity proxy.
 
-> **Methodological Note:** Feature importance indicates predictive utility within the trained ensemble; it does not establish causal proof. Full ranking table saved in `ai-engine/evaluation/feature_importance.csv` and visualization in `ai-engine/plots/feature_importance.png`.
+> **Methodological Note:** Feature importance indicates predictive utility within the trained ensemble; it does not establish causal proof. Diagnostic plot saved in `ai-engine/plots/feature_importance.png`.
 
 ---
 
 ## 9. Final Model Evaluation & Diagnostic Analysis
 
-The final model (`food_surplus_model.pkl`) was evaluated on the held-out test partition ($N = 1,600$ samples, $20\%$ of total records) via `ai-engine/evaluation/evaluate_model.py`.
+Evaluated on the held-out test partition ($N = 1,600$ samples, $20\%$ of total records) via `ai-engine/evaluation/evaluate_model.py`:
 
-### 1. Quantitative Performance Summary
-| Evaluation Metric | Test Set Value | Unit / Scale | Meaning for Problem |
-| :--- | :---: | :---: | :--- |
-| **Mean Absolute Error (MAE)** | **`14.5793`** | Meals | Average deviation between predicted surplus and ground truth. |
-| **Root Mean Squared Error (RMSE)** | **`20.6869`** | Meals | Standard deviation of residuals, penalizing larger prediction misses. |
-| **Coefficient of Determination ($R^2$)** | **`0.9543`** | Dimensionless $[-\infty, 1.0]$ | Model accounts for $95.43\%$ of total surplus variance. |
+- **Mean Absolute Error (MAE):** `14.5793 meals`
+- **Root Mean Squared Error (RMSE):** `20.6869 meals`
+- **Coefficient of Determination ($R^2$):** `0.9543`
+- **Mean Residual Bias ($\bar{e}$):** `-0.2729 meals` (Near-zero systematic error)
+- **Residual Standard Deviation ($s_e$):** `20.6851 meals`
+- **Tolerance Interval ($\pm 15$ meals):** `65.38%` of test samples
+- **Tolerance Interval ($\pm 25$ meals):** `82.81%` of test samples
+- **Diagnostic Plots:** [actual_vs_predicted.png](file:///k:/CiBus-Ai%20R/ai-engine/plots/actual_vs_predicted.png), [residual_analysis.png](file:///k:/CiBus-Ai%20R/ai-engine/plots/residual_analysis.png).
 
-### 2. Descriptive Range & Distributional Diagnostics
-- **Actual Surplus Range ($y$):** $[1.00, 643.70]$ meals (Mean = $116.14$, Std = $96.72$)
-- **Predicted Surplus Range ($\hat{y}$):** $[11.93, 632.70]$ meals (Mean = $116.41$, Std = $93.97$)
-- **Mean Residual (Bias $\bar{e}$):** **`-0.2729 meals`** (Demonstrates virtually zero global bias)
-- **Standard Deviation of Residuals ($s_e$):** `20.6851 meals`
+---
 
-### 3. Practical Tolerance Intervals *(Explicitly distinct from accuracy)*
-- **Predictions within $\pm 10$ meals:** **49.38%** of test samples
-- **Predictions within $\pm 15$ meals:** **65.38%** of test samples
-- **Predictions within $\pm 25$ meals:** **82.81%** of test samples
+## 10. Standalone Prediction Pipeline & Inference Workflow
 
-### 4. Actual vs. Predicted Visual Diagnostics
-- **Plot:** `ai-engine/plots/actual_vs_predicted.png`
-- **Observation:** Test sample predictions tightly cluster along the ideal $y = x$ reference diagonal across all surplus scales ($0$ to $640+$ meals), confirming linear calibration across both small local dining and large banquet service events.
+The prediction system is implemented in `ai-engine/prediction/predict.py`:
 
-### 5. Residual Distribution Diagnostics
-- **Plot:** `ai-engine/plots/residual_analysis.png`
-- **Observation:** Residuals ($e_i = y_i - \hat{y}_i$) are evenly distributed around the horizontal zero line ($e = 0$). Slight heteroscedastic spread at higher surplus volumes ($>400$ meals) reflects natural physical scaling variance in large banquet operations.
+```
+Input Operational Dictionary
+            │
+            ├── 1. Validation: Verifies 9 keys, bounds, and REJECTS Meals_Sold
+            ├── 2. Transformation: Converts via persisted ColumnTransformer
+            ├── 3. Inference: Computes prediction via food_surplus_model.pkl
+            └── 4. Physical Bounding: Clips to [0.0, Meals_Prepared]
+```
 
-### 6. Limitations of the Final Evaluation
-- **Simulated Variance:** Evaluated on synthetic operational records; real-world commercial kitchen deployments will introduce unmodeled sensory noise and seasonal menu shifts.
-- **Static Pre-Service Horizon:** Estimates apply at batch preparation time and do not adapt dynamically to mid-shift operational adjustments.
-- **All Evaluation Artifacts:** Logged in `ai-engine/evaluation/final_results.json` and row-level predictions stored in `ai-engine/evaluation/predictions.csv`.
+### Example Prediction:
+```python
+from prediction.predict import predict_surplus
+
+input_data = {
+    "Day": "Saturday",
+    "Weather": "Sunny",
+    "Customers_Forecast": 350,
+    "Meals_Prepared": 400,
+    "Festival": "No",
+    "Event_Type": "Regular",
+    "Staff_Count": 12,
+    "Avg_Rating": 4.3,
+    "Special_Event": 0
+}
+
+predicted_meals = predict_surplus(input_data)
+# Returns: 41.14 meals
+```

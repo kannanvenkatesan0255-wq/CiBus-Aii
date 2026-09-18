@@ -63,19 +63,53 @@ To strictly prevent **data leakage**, only pre-service operational and environme
 ---
 
 ## 7. Current Development Phase
-- **Phase:** **Phase 7 – Final Model Evaluation Completed**
-- **Status:** Conducted full test-set evaluation ($N=1,600$) on `food_surplus_model.pkl`. Generated `ai-engine/plots/actual_vs_predicted.png`, `ai-engine/plots/residual_analysis.png`, `ai-engine/evaluation/predictions.csv`, and `ai-engine/evaluation/final_results.json`.
-- **Model Type:** Supervised Regression (`RandomForestRegressor`, `n_estimators=200`, `max_depth=15`, `max_features=0.8`).
-- **Final Evaluation Metrics:**
-  - $\text{MAE} = 14.5793$ meals
-  - $\text{RMSE} = 20.6869$ meals
-  - $R^2 = 0.9543$ (Explained Variance)
-  - Mean Residual Bias: $-0.2729$ meals (Near-zero systematic error)
-  - 82.81% of test predictions within $\pm 25$ meals.
+- **Phase:** **Phase 8 – Reusable Prediction System Completed**
+- **Status:** Implemented and validated real-time/batch prediction module in `ai-engine/prediction/predict.py` and automated test suite in `ai-engine/prediction/test_predict.py` (9 unit tests passing).
+- **Inference Interfaces:** Python API (`predict_surplus()`) and Terminal CLI.
+- **Data Leakage Guarantee:** `Meals_Sold` is strictly rejected during inference.
 
 ---
 
-## 8. Future Modules *(Planned Future Work)*
+## 8. Making Predictions (Inference Interface)
+
+### A. Python API
+```python
+from prediction.predict import predict_surplus
+
+sample_event = {
+    "Day": "Saturday",
+    "Weather": "Sunny",
+    "Customers_Forecast": 350,
+    "Meals_Prepared": 400,
+    "Festival": "No",
+    "Event_Type": "Regular",
+    "Staff_Count": 12,
+    "Avg_Rating": 4.3,
+    "Special_Event": 0
+}
+
+surplus_estimate = predict_surplus(sample_event)
+print(f"Predicted Surplus: {surplus_estimate} meals")
+# Output: Predicted Surplus: 41.14 meals
+```
+
+### B. Command-Line Interface (CLI)
+```bash
+python ai-engine/prediction/predict.py \
+  --day Saturday \
+  --weather Sunny \
+  --customers 350 \
+  --meals 400 \
+  --festival No \
+  --event Regular \
+  --staff 12 \
+  --rating 4.3 \
+  --special 0
+```
+
+---
+
+## 9. Future Modules *(Planned Future Work)*
 The following modules represent subsequent milestones:
 - [x] **Data Pipeline Execution:** Synthetic dataset generation ($N=8000$) with domain-realistic variance and validation checks.
 - [x] **Data Preprocessing & Encoding Pipeline:** Train-test splitting ($80/20$), leakage-safe ColumnTransformer fitting, and artifact serialization.
@@ -83,7 +117,7 @@ The following modules represent subsequent milestones:
 - [x] **Final Model Training & Hyperparameter Tuning:** 3-Fold Cross-Validation parameter tuning, test evaluation, and baseline comparison.
 - [x] **Feature Importance Analysis:** Mean Decrease in Impurity (MDI) extraction, ranking tables, and diagnostic plot.
 - [x] **Evaluation & Diagnostic Plotting:** True vs. Predicted residual analysis, MAE, RMSE, and $R^2$ evaluation plots.
-- [ ] **Standalone Prediction Interface:** Pre-service CLI and batch inference script.
+- [x] **Standalone Prediction Interface:** Pre-service CLI and batch inference script with defensive input validation.
 - [ ] **NGO Matching Engine:** Distance- and capacity-aware matching algorithm (*Future Milestone*).
 - [ ] **Dynamic Route Optimization:** Multi-stop pickup and drop route planning (*Future Milestone*).
 - [ ] **Volunteer Allocation Engine:** Task dispatch system (*Future Milestone*).
