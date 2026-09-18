@@ -157,3 +157,17 @@ input_data = {
 predicted_meals = predict_surplus(input_data)
 # Returns: 41.14 meals
 ```
+
+---
+
+## 11. Backend REST API Integration & Serving
+
+To enable web and mobile client applications to consume the trained model, CIBUS-AI encapsulates the inference engine inside an asynchronous **FastAPI** service (`backend/app/`):
+
+1. **Zero Retraining Architecture:** The backend imports `predict_surplus()` and `load_inference_artifacts()` directly from `ai-engine/prediction/predict.py`. No training, tuning, or modification of model weights occurs during API execution.
+2. **Schema & Leakage Defense:** Incoming JSON requests are validated using Pydantic schemas (`backend/app/schemas.py`). Any attempt to submit post-service features (such as `Meals_Sold`) triggers an immediate HTTP 422 validation error.
+3. **Operational Contextualization:** In addition to the raw quantitative prediction $\hat{y}$, the service layer attaches logistics recommendations (e.g. shelter alert thresholds) based on forecasted surplus volume.
+4. **Endpoint Exposure:**
+   - `POST /api/predict`: Real-time surplus forecasting endpoint.
+   - `GET /api/model-info`: Returns active model metadata, feature schemas, and test evaluation metrics.
+   - `GET /health`: Validates server health and confirms both ML model and preprocessor artifacts are loaded.

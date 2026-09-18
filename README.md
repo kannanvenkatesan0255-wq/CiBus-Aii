@@ -172,7 +172,6 @@ print(f"Predicted Surplus: {surplus_estimate} meals")
 ```
 
 ### B. Command-Line Interface (CLI):
-```bash
 python ai-engine/prediction/predict.py \
   --day Saturday \
   --weather Sunny \
@@ -187,7 +186,22 @@ python ai-engine/prediction/predict.py \
 
 ---
 
-## 13. Project Directory Structure
+## 13. Backend REST API Integration Layer
+
+CIBUS-AI provides an asynchronous RESTful backend service built on **FastAPI** and **Uvicorn** to expose the trained Random Forest engine for web and mobile client integration.
+
+### Data Flow:
+$$\text{Client (HTTP JSON)} \longrightarrow \text{FastAPI Route} \longrightarrow \text{Pydantic Schema Validation} \longrightarrow \text{Prediction Service} \longrightarrow \text{Trained Model} \longrightarrow \text{Surplus Forecast JSON}$$
+
+### Key Endpoints:
+- `GET /health` – Confirms server responsiveness and verifies ML model & preprocessor loading.
+- `GET /api/model-info` – Returns active model metadata, feature schemas, and evaluation metrics.
+- `POST /api/predict` – Accepts operational features (e.g. `Day`, `Weather`, `Meals_Prepared`) and returns predicted surplus with logistical advice.
+- `GET /docs` – Interactive Swagger UI API explorer.
+
+---
+
+## 14. Project Directory Structure
 ```
 CIBUS-AI/
 ├── ai-engine/
@@ -225,20 +239,35 @@ CIBUS-AI/
 │   │
 │   ├── prediction/
 │   │   ├── predict.py                   # Reusable CLI & API prediction module
-│   │   └── test_predict.py              # Unit test suite (9 tests passing)
+│   │   └── test_predict.py              # ML Unit test suite (9 tests passing)
 │   │
-│   ├── requirements.txt                 # Dependencies
+│   ├── requirements.txt                 # ML Dependencies
 │   └── README.md
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py                      # FastAPI app entry point, CORS & health check
+│   │   ├── schemas.py                   # Pydantic input/output schemas & validation
+│   │   ├── services/
+│   │   │   └── prediction_service.py    # Service layer bridging FastAPI to ML engine
+│   │   └── routes/
+│   │       └── prediction.py            # Prediction and model metadata REST routes
+│   ├── tests/
+│   │   └── test_prediction_api.py       # Automated API test suite (10 tests passing)
+│   ├── requirements.txt                 # Backend dependencies
+│   └── README.md                        # Backend documentation
 │
 ├── docs/
 │   ├── project_overview.md              # Scoping & problem formulation
 │   ├── dataset_description.md           # Formal data schema & leakage rules
 │   ├── model_documentation.md           # Complete ML methodology & metrics
 │   ├── prediction_documentation.md      # Inference guide & API reference
+│   ├── backend_architecture.md          # Backend integration & API design
 │   ├── pbl_report_content.md            # Chennai Institute of Tech PBL Report
 │   ├── references.md                    # IEEE formatted reference list
 │   ├── appendix.md                      # Code & experimental appendix
 │   ├── documentation_audit.md           # Consistency & integrity audit
+│   ├── project_audit.md                 # Complete project quality audit
 │   └── weekly_progress.md               # Weekly PBL progress log
 │
 ├── .gitignore
@@ -247,7 +276,7 @@ CIBUS-AI/
 
 ---
 
-## 14. Installation & Reproduction Guide
+## 15. Installation & Reproduction Guide
 
 ### 1. Environment Setup
 ```bash
@@ -255,11 +284,12 @@ CIBUS-AI/
 git clone https://github.com/kannanvenkatesan0255-wq/CiBus-Aii.git
 cd CiBus-Aii
 
-# Install required dependencies
+# Install required ML & backend dependencies
 pip install -r ai-engine/requirements.txt
+pip install -r backend/requirements.txt
 ```
 
-### 2. Step-by-Step Pipeline Execution
+### 2. Step-by-Step ML Pipeline Execution
 ```bash
 # 1. Generate and validate the 8,000-record dataset
 python -u ai-engine/dataset/generate_dataset.py
@@ -280,10 +310,19 @@ python -u ai-engine/training/feature_importance.py
 # 6. Evaluate the final model on held-out test set
 python -u ai-engine/evaluation/evaluate_model.py
 
-# 7. Run automated prediction test suite (9 unit tests)
-python -u ai-engine/prediction/test_predict.py
+# 7. Run automated ML prediction test suite (9 unit tests)
+python -u -m unittest ai-engine/prediction/test_predict.py
+```
 
-# 8. Run interactive prediction CLI demo
+### 3. Backend API Execution & Testing
+```bash
+# Start FastAPI backend development server
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Run automated backend API test suite (10 tests)
+python -u -m unittest backend/tests/test_prediction_api.py
+
+# Run interactive prediction CLI demo
 python -u ai-engine/prediction/predict.py --day Saturday --weather Sunny --customers 350 --meals 400 --event Regular --rating 4.3
 ```
 
