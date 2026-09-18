@@ -1,0 +1,28 @@
+{
+    "model_name": "RandomForestRegressor (Baseline)",
+    "algorithm": "Random Forest Regression",
+    "hyperparameters": {
+        "n_estimators": 100,
+        "random_state": 42,
+        "criterion": "squared_error",
+        "max_depth": null,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "max_features": 1.0,
+        "bootstrap": true
+    },
+    "dataset": {
+        "path": "dataset\\food_surplus.csv",
+        "total_samples": 8000,
+        "train_size": 6400,
+        "test_size": 1600,
+        "feature_count": 25
+    },
+    "metrics": {
+        "mae": 14.2939,
+        "rmse": 20.5429,
+        "r2": 0.9549
+    },
+    "target_variable": "Surplus_Meals",
+    "random_state": 42
+}

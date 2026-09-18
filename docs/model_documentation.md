@@ -41,7 +41,7 @@ In real-world inference (`predict.py`), individual JSON/dictionary inputs are pa
 
 ---
 
-## 4. Planned Evaluation Metrics
+## 4. Evaluation Metrics Definition
 
 Regression models are evaluated using the following formal metrics:
 
@@ -62,9 +62,28 @@ $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar
 ## 5. Critical Distinction: $R^2$ is NOT Classification Accuracy
 
 > [!WARNING]
-> Stating that an $R^2$ score of $0.88$ represents "88% accuracy" is mathematically incorrect. $R^2$ is the Coefficient of Determination (explained variance). Classification accuracy applies only to discrete class labels.
+> Stating that an $R^2$ score of $0.9549$ represents "95.49% accuracy" is mathematically incorrect. $R^2$ is the Coefficient of Determination (explained variance). Classification accuracy applies only to discrete class labels.
 
 ---
 
-## 6. Model Performance Results
-*No models have been trained at this stage. Quantitative performance results, error metrics, and residual distribution charts will be populated upon completion of model training and validation execution.*
+## 6. Baseline Model Performance Results *(Experimental Run)*
+
+The baseline model was trained using `ai-engine/training/train_baseline.py` on the held-out test partition ($N = 1,600$).
+
+### Baseline Configuration:
+- **Estimator:** `sklearn.ensemble.RandomForestRegressor`
+- **Number of Trees (`n_estimators`):** 100
+- **Random State:** 42
+- **Hyperparameter Tuning:** None (Default parameters: `max_depth=None`, `min_samples_split=2`, `min_samples_leaf=1`, `max_features=1.0`)
+
+### Measured Baseline Metrics:
+| Metric | Calculated Value | Interpretation |
+| :--- | :---: | :--- |
+| **Mean Absolute Error (MAE)** | **14.2939 meals** | On average, predictions deviate by $\approx 14.3$ meals from ground truth surplus. |
+| **Root Mean Squared Error (RMSE)** | **20.5429 meals** | Standard deviation of residual prediction errors. |
+| **Coefficient of Determination ($R^2$)** | **0.9549** | The baseline model explains $95.49\%$ of the variance in surplus meals. |
+
+### What the Baseline Tells Us:
+1. **Strong Non-Linear Signal:** The 25 pre-service operational features successfully capture the core dynamics of food surplus generation.
+2. **Benchmark Established:** Provides an empirical standard against which hyperparameter tuning, feature pruning, and cross-validation models can be compared in subsequent phases.
+3. **Artifacts Exported:** Model weights persisted at `ai-engine/models/baseline_food_surplus_model.pkl` and benchmark results logged in `ai-engine/evaluation/baseline_results.json`.

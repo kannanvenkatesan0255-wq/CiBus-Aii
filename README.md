@@ -63,9 +63,13 @@ To strictly prevent **data leakage**, only pre-service operational and environme
 ---
 
 ## 7. Current Development Phase
-- **Phase:** **Phase 3 – Data Preprocessing & Encoding Pipeline Completed**
-- **Status:** Implemented reusable, leakage-safe preprocessing pipeline in `ai-engine/preprocessing/preprocess.py`. Transformed $X_{\text{train}}$ ($6,400 \times 25$) and $X_{\text{test}}$ ($1,600 \times 25$) with One-Hot categorical encodings and serialized `models/preprocessor.joblib`.
-- **Scope Note:** No ML models have been trained and no performance metrics have been fabricated at this stage.
+- **Phase:** **Phase 4 – Baseline Model Training Completed**
+- **Status:** Trained baseline Random Forest Regressor (`n_estimators=100`, `random_state=42`) via `ai-engine/training/train_baseline.py`.
+- **Baseline Test Metrics:**
+  - $\text{MAE} = 14.2939$ meals
+  - $\text{RMSE} = 20.5429$ meals
+  - $R^2 = 0.9549$ (Explained Variance)
+- **Artifacts:** `ai-engine/models/baseline_food_surplus_model.pkl`, `ai-engine/evaluation/baseline_results.json`.
 
 ---
 
@@ -73,7 +77,8 @@ To strictly prevent **data leakage**, only pre-service operational and environme
 The following modules represent subsequent milestones:
 - [x] **Data Pipeline Execution:** Synthetic dataset generation ($N=8000$) with domain-realistic variance and validation checks.
 - [x] **Data Preprocessing & Encoding Pipeline:** Train-test splitting ($80/20$), leakage-safe ColumnTransformer fitting, and artifact serialization.
-- [ ] **Model Training & Hyperparameter Tuning:** Baseline vs. Random Forest training with cross-validation.
+- [x] **Baseline Model Training:** Random Forest baseline training ($n=100$) and baseline benchmark logging.
+- [ ] **Final Model Training & Hyperparameter Tuning:** Cross-validation and fine-tuning.
 - [ ] **Evaluation & Diagnostic Plotting:** True vs. Predicted residual analysis, MAE, RMSE, and $R^2$ evaluation.
 - [ ] **NGO Matching Engine:** Distance- and capacity-aware matching algorithm (*Future Milestone*).
 - [ ] **Dynamic Route Optimization:** Multi-stop pickup and drop route planning (*Future Milestone*).
