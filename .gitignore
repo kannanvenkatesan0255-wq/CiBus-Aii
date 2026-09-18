@@ -17,8 +17,10 @@ ai-engine/models/*.pkl
 ai-engine/models/*.joblib
 !ai-engine/models/.gitkeep
 
-# Generated Datasets
-ai-engine/dataset/*.csv
+# Datasets
+ai-engine/dataset/*.tmp.csv
+ai-engine/dataset/*.scratch.csv
+!ai-engine/dataset/food_surplus.csv
 !ai-engine/dataset/.gitkeep
 
 # Generated Evaluation Plots & Logs

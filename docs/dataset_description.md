@@ -2,61 +2,90 @@
 
 ---
 
-## 1. Planned Dataset Purpose
-The `food_surplus.csv` dataset is designed to provide supervised training instances representing daily service shifts across commercial cafeterias, institutional food providers, and catering services. Each record captures the operational context, environmental conditions, and scheduling decisions known *prior to or during meal preparation*, mapped to the observed resulting meal surplus.
+## 1. Dataset Overview & Purpose
+The `food_surplus.csv` dataset provides structured supervised training records representing daily meal shifts across dining establishments, institutional canteens, and catering services. It models the non-linear dynamics governing operational demand variance and post-service food surplus.
 
-The primary objective is to allow the model to learn the underlying non-linear relationship between pre-service operational indicators and the volume of edible meals left unconsumed.
-
----
-
-## 2. Expected Columns and Data Types
-
-| Column Name | Data Type | Role | Example Values |
-| :--- | :--- | :--- | :--- |
-| `Day` | Categorical (string) | Input Feature | `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Friday`, `Saturday`, `Sunday` |
-| `Weather` | Categorical (string) | Input Feature | `Sunny`, `Rainy`, `Cloudy`, `Stormy` |
-| `Customers_Forecast` | Numeric (integer) | Input Feature | `120`, `250`, `480` |
-| `Meals_Prepared` | Numeric (integer) | Input Feature | `150`, `300`, `500` |
-| `Festival` | Categorical / Binary | Input Feature | `Yes`, `No` (or `None`, `Diwali`, `Eid`, `Christmas`) |
-| `Event_Type` | Categorical (string) | Input Feature | `Regular`, `Buffet`, `Corporate`, `Banquet` |
-| `Staff_Count` | Numeric (integer) | Input Feature | `8`, `15`, `25` |
-| `Avg_Rating` | Numeric (float) | Input Feature | `3.8`, `4.2`, `4.9` |
-| `Special_Event` | Binary (integer) | Input Feature | `0`, `1` |
-| `Surplus_Meals` | Numeric (integer/float) | **Target Variable ($y$)** | `15`, `42`, `85` |
-
-*(Note: In raw logs, `Meals_Sold` or `Actual_Customers` may exist for ground-truth calculation, but they are strictly sequestered from model training features).*
+- **File Location:** `ai-engine/dataset/food_surplus.csv`
+- **Total Records ($N$):** Exactly **8,000** rows
+- **Total Columns ($D$):** **10** columns (9 prediction-time input features + 1 continuous target variable)
+- **Data Completeness:** 0 missing values, 0 duplicate records
+- **Random Seed:** `42` (ensuring 100% deterministic reproducibility)
 
 ---
 
-## 3. Feature Descriptions
+## 2. Column Schema & Data Types
 
-### Input Features ($X$)
-1. **`Day`**: Day of the week. Captures recurring cyclical demand patterns (e.g., lower cafeteria attendance on Fridays/weekends, higher regular attendance mid-week).
-2. **`Weather`**: Environmental weather forecast. Severe rain or storms often drastically reduce outdoor footfall, leaving excess prepared food.
-3. **`Customers_Forecast`**: Expected footfall based on table reservations, ticket sales, or historical attendance estimations made prior to meal cooking.
-4. **`Meals_Prepared`**: Total number of meal portions batch-cooked or pre-portioned by the kitchen staff for the service window.
-5. **`Festival`**: Indicator denoting if the day falls on or near a major holiday/festival, which often alters dining habits and attendance.
-6. **`Event_Type`**: Format of food service. Buffets and banquets typically produce higher variance in food preparation buffers compared to fixed-portion à la carte or regular cafeteria services.
-7. **`Staff_Count`**: Kitchen and floor staff deployed. Acts as a proxy for operational scale and kitchen capacity.
-8. **`Avg_Rating`**: Historical establishment rating (1.0 to 5.0). Lower satisfaction can lead to customer churn or lower than projected consumption.
-9. **`Special_Event`**: Binary flag indicating unscheduled or special occasions (e.g., campus workshops, corporate parties, unexpected guest speaker events).
-
-### Target Variable ($y$)
-- **`Surplus_Meals`**: The actual physical count of wholesome, edible meal portions remaining at the conclusion of service that were not consumed or sold.
+| # | Column Name | Data Type | Feature Role | Valid Range / Categories | Description |
+| :-: | :--- | :--- | :--- | :--- | :--- |
+| 1 | `Day` | Categorical (string) | Input Feature ($X$) | `Monday` to `Sunday` | Day of the operational week |
+| 2 | `Weather` | Categorical (string) | Input Feature ($X$) | `Sunny`, `Cloudy`, `Rainy`, `Stormy` | Environmental weather forecast for the service period |
+| 3 | `Customers_Forecast` | Numeric (integer) | Input Feature ($X$) | $60 - 950$ | Anticipated diner attendance based on bookings/forecast |
+| 4 | `Meals_Prepared` | Numeric (integer) | Input Feature ($X$) | $84 - 1,360$ | Total meal portions cooked/portioned in advance |
+| 5 | `Festival` | Categorical (string) | Input Feature ($X$) | `No`, `Diwali`, `Eid`, `Christmas`, `New Year` | Major festive or holiday period indicator |
+| 6 | `Event_Type` | Categorical (string) | Input Feature ($X$) | `Regular`, `Buffet`, `Corporate`, `Banquet` | Service format and operational context |
+| 7 | `Staff_Count` | Numeric (integer) | Input Feature ($X$) | $5 - 48$ | Kitchen and service staff deployed on duty |
+| 8 | `Avg_Rating` | Numeric (float) | Input Feature ($X$) | $2.51 - 5.00$ | Historical customer satisfaction/quality rating |
+| 9 | `Special_Event` | Binary (integer) | Input Feature ($X$) | `0`, `1` | Indicator for unscheduled or high-profile events |
+| 10 | `Surplus_Meals` | Numeric (float) | **Target Variable ($y$)** | $0.0 - 686.0$ | Number of edible meal portions left over after service |
 
 ---
 
-## 4. Prediction-Time Feature Rule & Data Leakage Prevention
+## 3. Summary Statistics (Generated Dataset)
 
-### The Fundamental Rule
-> **Any feature used during model training and inference must be strictly available at the moment the prediction is requested (i.e., *before* or *during* meal preparation, well before service concludes).**
+### Numerical Attributes ($N = 8,000$)
+| Attribute | Mean | Std Dev | Min | 25% | 50% (Median) | 75% | Max |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `Customers_Forecast` | 418.29 | 210.49 | 60.00 | 241.00 | 410.00 | 576.00 | 950.00 |
+| `Meals_Prepared` | 519.66 | 263.95 | 84.00 | 302.00 | 502.00 | 702.00 | 1360.00 |
+| `Staff_Count` | 22.59 | 9.56 | 5.00 | 15.00 | 22.00 | 29.00 | 48.00 |
+| `Avg_Rating` | 4.11 | 0.42 | 2.51 | 3.82 | 4.11 | 4.40 | 5.00 |
+| `Special_Event` | 0.16 | 0.37 | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 |
+| **`Surplus_Meals` (Target)** | **118.59** | **97.27** | **0.00** | **47.88** | **86.70** | **162.22** | **686.00** |
 
-### Why `Meals_Sold` Must NOT Be Used as an Input Feature
+### Categorical Distributions
+- **`Day`**: Thursday (1,225), Friday (1,189), Tuesday (1,168), Monday (1,127), Saturday (1,100), Wednesday (1,099), Sunday (1,092)
+- **`Weather`**: Sunny (3,784), Cloudy (2,233), Rainy (1,421), Stormy (562)
+- **`Festival`**: No (6,411), Diwali (485), Eid (398), Christmas (374), New Year (332)
+- **`Event_Type`**: Regular (3,612), Buffet (2,244), Corporate (1,331), Banquet (813)
 
-In food service operations, the actual surplus is mathematically defined post-service as:
+---
+
+## 4. How the Synthetic Data Was Generated
+
+The dataset generation script (`ai-engine/dataset/generate_dataset.py`) utilizes a parameterized behavioral synthesis model:
+1. **Operational Scaling:** `Customers_Forecast` is drawn based on day-of-week and event type distributions.
+2. **Buffer Modeling:** `Meals_Prepared` is calculated from forecast with domain-realistic safety buffers (Buffets/Banquets maintain +15% to +38% safety buffer, Corporate maintains tighter +6% to +18% margins).
+3. **Compound Surplus Formation:** `Surplus_Meals` is computed without using post-facto sales, incorporating:
+   - *Baseline buffer surplus:* Expected excess between preparation and planned demand.
+   - *Weather disruptions:* Severe storms (+20% to +35%) and heavy rain (+8% to +18%) that diminish footfall.
+   - *Event format structural waste:* Continuous full display requirements in buffets and banquets.
+   - *Rating penalty:* Dissatisfaction factors when historical rating falls below 3.8.
+   - *Multi-variable interaction terms:* Compound effects (e.g., Stormy weather $\times$ Banquet format).
+   - *Controlled stochastic Gaussian noise:* $\epsilon \sim \mathcal{N}(0, 6.5^2)$ to model natural real-world unobserved behavioral entropy.
+4. **Physical Bounds:** Strictly bounded such that $\text{Surplus\_Meals} \ge 0.0$ and $\text{Surplus\_Meals} \le 0.85 \times \text{Meals\_Prepared}$.
+
+---
+
+## 5. Why Synthetic Data is Used
+1. **Privacy & Commercial Sensitivity:** Commercial food providers rarely publish granular shift-by-shift surplus and waste metrics due to brand perception and liability concerns.
+2. **Controlled Experimental Design:** Enables testing non-linear regression response under known statistical interaction conditions.
+3. **Rapid Academic Prototyping:** Provides a robust, leak-free benchmark dataset for PBL development without reliance on incomplete third-party web scrapers.
+
+---
+
+## 6. Critical Data-Leakage Prevention Rule
+
+### The `Meals_Sold` Exclusion Rule
+In catering accounting, actual leftover is defined post-event as:
 $$\text{Surplus\_Meals} = \text{Meals\_Prepared} - \text{Meals\_Sold}$$
 
-If `Meals_Sold` is included as a feature in the training matrix $X$:
-1. **Direct Target Leakage:** The learning algorithm would trivially learn the arithmetic formula ($\text{Surplus} = \text{Meals\_Prepared} - \text{Meals\_Sold}$) rather than learning the real-world demand patterns, variance, and behavioral drivers.
-2. **Inference Impossibility:** In a real deployment, `Meals_Sold` is only known **after** all customer transactions have concluded and service has shut down. If the ML model required `Meals_Sold` to make a prediction, it could only run at the end of the day—completely defeating the objective of generating advance alerts for proactive NGO redistribution logistics.
-3. **PBL Examination Flaw:** Utilizing post-facto features is one of the most critical conceptual errors in machine learning system design. CIBUS-AI explicitly enforces the exclusion of `Meals_Sold` from all feature vectors.
+**Why `Meals_Sold` is Strictly Omitted:**
+1. **Target Leakage:** Including `Meals_Sold` reduces the machine learning problem to trivial arithmetic, preventing the model from discovering real behavioral interactions.
+2. **Temporal Invalidity:** `Meals_Sold` is only known **after** service closure. A model requiring `Meals_Sold` cannot make pre-service advance predictions needed to coordinate timely NGO food redistribution.
+
+---
+
+## 7. Limitations of Synthetic Data
+- **Distributional Assumptions:** Underlying parameters assume stationary seasonal habits; sudden macro-economic shifts or supply chain shortages are not modeled.
+- **Micro-climate Granularity:** Weather is modeled categorically rather than through localized continuous meteorological measurements (e.g., millimeter precipitation, humidity).
+- **Homogeneous Menu Profile:** All meal portions are treated as standardized aggregate meal units rather than itemized per-dish perishability profiles.

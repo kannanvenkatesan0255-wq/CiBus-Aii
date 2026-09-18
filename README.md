@@ -63,15 +63,16 @@ To strictly prevent **data leakage**, only pre-service operational and environme
 ---
 
 ## 7. Current Development Phase
-- **Phase:** **Phase 1 – Machine Learning Foundation & Scaffolding**
-- **Status:** Architectural setup, documentation, pipeline design, and leakage-safe feature definition.
-- **Scope Note:** No models have been trained and no performance metrics have been fabricated at this stage.
+- **Phase:** **Phase 2 – Dataset Generation & Validation Completed**
+- **Status:** Generated and validated `ai-engine/dataset/food_surplus.csv` ($N = 8,000$ rows, 10 columns, 0 missing values, 0 duplicates).
+- **Scope Note:** Dataset is leakage-free (omits `Meals_Sold`). No ML models have been trained and no performance metrics have been fabricated at this stage.
 
 ---
 
 ## 8. Future Modules *(Planned Future Work)*
-The following modules represent subsequent milestones outside the current ML foundation phase:
-- [ ] **Data Pipeline Execution:** Synthetic dataset generation with domain-realistic variance.
+The following modules represent subsequent milestones:
+- [x] **Data Pipeline Execution:** Synthetic dataset generation ($N=8000$) with domain-realistic variance and validation checks.
+- [ ] **Data Preprocessing & Encoding Pipeline:** Train-test splitting ($80/20$) and categorical encoding serialization.
 - [ ] **Model Training & Hyperparameter Tuning:** Baseline vs. Random Forest training with cross-validation.
 - [ ] **Evaluation & Diagnostic Plotting:** True vs. Predicted residual analysis, MAE, RMSE, and $R^2$ evaluation.
 - [ ] **NGO Matching Engine:** Distance- and capacity-aware matching algorithm (*Future Milestone*).
