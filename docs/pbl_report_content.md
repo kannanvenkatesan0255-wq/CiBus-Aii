@@ -209,6 +209,9 @@ The refined model (`n_estimators=200`, `max_depth=15`, `max_features=0.8`) was s
 | **NGO Matching Service** | `backend/app/services/ngo_matching_service.py` | Predicted surplus, dietary type, coordinates | Rule-based multi-factor scoring & constraint-based capacity allocation. | Matched NGO list & allocations |
 | **Route Optimization Service** | `backend/app/services/route_optimization_service.py` | Source coordinates, matched NGO coordinates | Pairwise Haversine distance matrix & greedy Nearest-Neighbor route sequencing ($O(N^2)$). | Sequenced itinerary & segment distances |
 | **Route Optimization API** | `backend/app/routes/route_optimization.py` | `POST /api/optimize-route` | Pydantic validation, coordinate checks, duplicate prevention, and response serialization. | `RouteOptimizeResponse` JSON |
+| **Analytics Service** | `backend/app/services/analytics_service.py` | Local activity store, ML evaluation file | Aggregates operational totals, computes allocation rate %, and loads factual ML performance metrics. | `DashboardResponse` data dict |
+| **Dashboard API** | `backend/app/routes/dashboard.py` | `GET /api/dashboard/summary`, `/recent`, `POST /activity` | Exposes operational telemetry, activity history, and workflow logging. | JSON endpoints |
+
 
 
 ## 5.2 Key Code Snippets

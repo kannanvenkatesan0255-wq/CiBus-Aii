@@ -190,6 +190,41 @@ runTest('Verify App.jsx connects NGOMatchingSection to RoutePlanningSection', ()
   assert.strictEqual(appCode.includes("matchedNGOs"), true);
 });
 
+// Test 15: Verify ImpactDashboard.jsx component renders operational cards and ML panel
+runTest('Verify ImpactDashboard.jsx component exists with operational metrics and ML panel', () => {
+  const dashCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'ImpactDashboard.jsx'), 'utf8');
+  assert.strictEqual(dashCode.includes("CIBUS-AI Impact Dashboard"), true);
+  assert.strictEqual(dashCode.includes("total_predicted_surplus_meals"), true);
+  assert.strictEqual(dashCode.includes("ML Model Performance"), true);
+  assert.strictEqual(dashCode.includes("MAE"), true);
+  assert.strictEqual(dashCode.includes("RMSE"), true);
+  assert.strictEqual(dashCode.includes("R²"), true);
+});
+
+// Test 16: Verify dashboard API methods in predictionService.js
+runTest('Verify getDashboardSummary, getRecentActivities, and recordActivity in predictionService.js', () => {
+  const serviceCode = fs.readFileSync(path.join(SRC_DIR, 'services', 'predictionService.js'), 'utf8');
+  assert.strictEqual(serviceCode.includes("getDashboardSummary"), true);
+  assert.strictEqual(serviceCode.includes("getRecentActivities"), true);
+  assert.strictEqual(serviceCode.includes("recordActivity"), true);
+  assert.strictEqual(serviceCode.includes("/api/dashboard/summary"), true);
+});
+
+// Test 17: Verify Header.jsx navigation anchors
+runTest('Verify Header.jsx navigation bar includes Dashboard and Workflow links', () => {
+  const headerCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'Header.jsx'), 'utf8');
+  assert.strictEqual(headerCode.includes("#impact-dashboard"), true);
+  assert.strictEqual(headerCode.includes("#prediction-section"), true);
+  assert.strictEqual(headerCode.includes("#ngo-matching"), true);
+  assert.strictEqual(headerCode.includes("#route-planning"), true);
+});
+
+// Test 18: Verify App.jsx integrates ImpactDashboard
+runTest('Verify App.jsx mounts ImpactDashboard component', () => {
+  const appCode = fs.readFileSync(path.join(SRC_DIR, 'App.jsx'), 'utf8');
+  assert.strictEqual(appCode.includes("ImpactDashboard"), true);
+});
+
 console.log(`\n----------------------------------------------------------------------`);
 console.log(`Test Execution Summary: ${passedTests} / ${totalTests} tests passed`);
 console.log(`======================================================================\n`);
@@ -199,5 +234,6 @@ if (passedTests === totalTests) {
 } else {
   process.exit(1);
 }
+
 
 

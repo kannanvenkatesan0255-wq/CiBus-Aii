@@ -217,4 +217,108 @@ export async function optimizeRoute(routeParams) {
   }
 }
 
+/**
+ * Retrieves aggregate operational dashboard summary and ML model performance metrics.
+ * 
+ * @returns {Promise<Object>} Dashboard summary and model performance payload
+ */
+export async function getDashboardSummary() {
+  const endpoint = `${API_BASE_URL}/api/dashboard/summary`;
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load dashboard metrics (HTTP ${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error("Unable to connect to CIBUS-AI Dashboard API. Please ensure the backend server is running.");
+    }
+    throw error;
+  }
+}
+
+/**
+ * Retrieves recent planned redistribution activity records.
+ * 
+ * @param {number} limit - Maximum number of recent activities to fetch (1-100)
+ * @returns {Promise<Array>} List of activity objects
+ */
+export async function getRecentActivities(limit = 10) {
+  const endpoint = `${API_BASE_URL}/api/dashboard/recent?limit=${encodeURIComponent(limit)}`;
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load recent activities (HTTP ${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error("Unable to connect to CIBUS-AI Dashboard API.");
+    }
+    throw error;
+  }
+}
+
+/**
+ * Records a completed or planned surplus redistribution workflow to the activity log.
+ * 
+ * @param {Object} activityData - Operational details of the workflow
+ * @returns {Promise<Object>} Saved activity record
+ */
+export async function recordActivity(activityData) {
+  const endpoint = `${API_BASE_URL}/api/dashboard/activity`;
+
+  const payload = {
+    source_name: String(activityData.source_name || 'Central Facility').trim(),
+    predicted_surplus_meals: parseFloat(activityData.predicted_surplus_meals || 0),
+    allocated_meals: parseFloat(activityData.allocated_meals || 0),
+    matched_ngo_count: parseInt(activityData.matched_ngo_count || 0, 10),
+    route_stop_count: parseInt(activityData.route_stop_count || 0, 10),
+    route_distance_km: parseFloat(activityData.route_distance_km || 0),
+    status: String(activityData.status || 'planned').toLowerCase(),
+    notes: activityData.notes || null
+  };
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Activity logging failed (HTTP ${response.status})`;
+      try {
+        const errData = await response.json();
+        if (errData.detail) errorMessage = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
+      } catch {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error("Unable to log activity to CIBUS-AI Dashboard API.");
+    }
+    throw error;
+  }
+}
+
+
 

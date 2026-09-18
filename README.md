@@ -277,30 +277,34 @@ CIBUS-AI/
 │   │   ├── services/
 │   │   │   ├── prediction_service.py    # Service layer bridging FastAPI to ML engine
 │   │   │   ├── ngo_matching_service.py  # Rule-based NGO matching & allocation
-│   │   │   └── route_optimization_service.py # Graph routing & nearest-neighbor heuristics
+│   │   │   ├── route_optimization_service.py # Graph routing & nearest-neighbor heuristics
+│   │   │   └── analytics_service.py     # Metrics aggregation & ML evaluation stats
 │   │   └── routes/
 │   │       ├── prediction.py            # Prediction and model metadata REST routes
 │   │       ├── ngo_matching.py          # NGO matching & redistribution route
-│   │       └── route_optimization.py    # Delivery route sequencing route
+│   │       ├── route_optimization.py    # Delivery route sequencing route
+│   │       └── dashboard.py             # Impact metrics & activity history route
 │   ├── data/
-│   │   └── ngos.csv                     # Synthetic partner NGO dataset
+│   │   ├── ngos.csv                     # Synthetic partner NGO dataset
+│   │   └── activity_history.json        # Demonstration activity persistence store
 │   ├── tests/
 │   │   ├── test_prediction_api.py       # Prediction API test suite (10 tests passing)
 │   │   ├── test_ngo_matching.py         # NGO matching test suite (10 tests passing)
 │   │   ├── test_route_optimization.py   # Route optimization test suite (10 tests passing)
+│   │   ├── test_analytics_dashboard.py  # Dashboard & analytics test suite (12 tests passing)
 │   │   └── test_e2e_workflow.py         # Complete end-to-end integration test
 │   ├── requirements.txt                 # Backend dependencies
 │   └── README.md                        # Backend documentation
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/                  # Header, Hero, Form, ResultCard, NGOMatching, RoutePlanning
+│   │   ├── components/                  # Header, Hero, Form, ResultCard, NGOMatching, RoutePlanning, ImpactDashboard
 │   │   ├── services/                    # predictionService.js API bridge
 │   │   ├── styles/                      # index.css & App.css design system
 │   │   ├── App.jsx                      # Main dashboard layout
 │   │   └── main.jsx                     # React DOM root
 │   ├── tests/
-│   │   └── frontend_test.cjs            # Automated frontend test runner (14 tests passing)
+│   │   └── frontend_test.cjs            # Automated frontend test runner (18 tests passing)
 │   ├── package.json                     # Vite & React dependencies
 │   ├── vite.config.js                   # Proxy & dev server config
 │   ├── .env.example                     # Environment template
@@ -315,6 +319,7 @@ CIBUS-AI/
 │   ├── frontend_architecture.md         # Frontend design & component flow
 │   ├── ngo_matching.md                  # NGO matching & redistribution logistics
 │   ├── route_optimization.md            # Route optimization & nearest-neighbor heuristics
+│   ├── impact_dashboard.md              # Impact dashboard & analytics system
 │   ├── pbl_report_content.md            # Chennai Institute of Tech PBL Report
 │   ├── references.md                    # IEEE formatted reference list
 │   ├── appendix.md                      # Code & experimental appendix
@@ -325,6 +330,29 @@ CIBUS-AI/
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## 17. Impact Dashboard & Operational Analytics
+
+```
+Surplus Forecasting (Random Forest ML Engine)
+        ↓
+Planned NGO Allocation (Rule-Based Matching)
+        ↓
+Dispatch Routing (Haversine + Nearest Neighbor)
+        ↓
+Activity Store (backend/data/activity_history.json)
+        ↓
+Impact Dashboard (GET /api/dashboard/summary & /recent)
+        ↓
+Operational Summary Cards + ML Evaluation Performance Panel (MAE, RMSE, R²)
+```
+
+- **Operational Telemetry:** Visualizes real session totals (Predicted Surplus, Planned Allocation, Matched NGOs, Route Distance).
+- **ML Model Performance Panel:** Reflects verified evaluation metrics from held-out test data (MAE = `14.58`, RMSE = `20.69`, $R^2$ = `0.9543`).
+- **Academic Distinction:** Distinguishes between ML regression predictions, rule-based matching, and application analytics without making false claims of physical food delivery.
+
 
 ---
 

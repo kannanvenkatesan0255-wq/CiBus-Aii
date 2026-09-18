@@ -1,0 +1,14 @@
+[
+  {
+    "activity_id": "ACT_20260918_001",
+    "timestamp": "2026-09-18T10:30:00Z",
+    "source_name": "Guindy Central Catering Facility",
+    "predicted_surplus_meals": 230.38,
+    "allocated_meals": 230.38,
+    "matched_ngo_count": 2,
+    "route_stop_count": 2,
+    "route_distance_km": 5.88,
+    "status": "planned",
+    "notes": "Demonstration baseline itinerary recorded during system verification."
+  }
+]

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { optimizeRoute } from '../services/predictionService';
+import { optimizeRoute, recordActivity } from '../services/predictionService';
 
 const SOURCE_PRESETS = [
   { name: 'Guindy Central Dispatch (13.01° N, 80.20° E)', lat: 13.0067, lon: 80.2026 },
@@ -17,13 +17,16 @@ const DEMO_NGOS = [
   { ngo_id: 'NGO_008', name: 'Pasumai Thayagam Kitchen', latitude: 12.9249, longitude: 80.1000, allocated_meals: 50.0 }
 ];
 
-export default function RoutePlanningSection({ matchedNGOs, sourceLocation }) {
+export default function RoutePlanningSection({ matchedNGOs, sourceLocation, onActivityLogged, predictedSurplus }) {
   const [selectedSourceIdx, setSelectedSourceIdx] = useState(0);
   const [activeNGOs, setActiveNGOs] = useState([]);
   const [routeResult, setRouteResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLogging, setIsLogging] = useState(false);
+  const [loggedStatus, setLoggedStatus] = useState('');
   const [error, setError] = useState('');
   const [showMatrix, setShowMatrix] = useState(false);
+
 
   // Sync active NGOs when upstream matching produces recipients
   useEffect(() => {
@@ -67,6 +70,7 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation }) {
 
       const result = await optimizeRoute(payload);
       setRouteResult(result);
+      setLoggedStatus('');
     } catch (err) {
       setError(err.message || 'Failed to optimize distribution route.');
     } finally {
@@ -74,10 +78,44 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation }) {
     }
   };
 
+  const handleSaveActivity = async () => {
+    if (!routeResult) return;
+    setIsLogging(true);
+    setLoggedStatus('');
+
+    try {
+      const surplus = predictedSurplus !== undefined && predictedSurplus !== null && Number(predictedSurplus) > 0
+        ? Number(predictedSurplus)
+        : routeResult.summary.total_allocated_meals;
+
+      await recordActivity({
+        source_name: routeResult.summary.start_location,
+        predicted_surplus_meals: surplus,
+        allocated_meals: routeResult.summary.total_allocated_meals,
+        matched_ngo_count: routeResult.summary.number_of_stops,
+        route_stop_count: routeResult.summary.number_of_stops,
+        route_distance_km: routeResult.summary.total_distance_km,
+        status: 'planned',
+        notes: `Itinerary generated via nearest-neighbor routing (${routeResult.summary.total_distance_km} km).`
+      });
+
+      setLoggedStatus('✅ Planned itinerary successfully saved to Impact Dashboard activity log!');
+      if (onActivityLogged) {
+        onActivityLogged();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to record activity.');
+    } finally {
+      setIsLogging(false);
+    }
+  };
+
   const handleClearRoute = () => {
     setRouteResult(null);
+    setLoggedStatus('');
     setError('');
   };
+
 
   return (
     <section className="info-section route-planning-section" id="route-planning" style={{ marginTop: '2rem' }}>
@@ -329,6 +367,33 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation }) {
               )}
             </div>
 
+            {/* Action to Log Planned Workflow to Dashboard */}
+            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', borderTop: '1px dashed var(--border-subtle)', paddingTop: '1.25rem' }}>
+              <button
+                id="btn-log-activity"
+                type="button"
+                className="btn btn-primary"
+                style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.9rem',
+                  padding: '0.6rem 1.25rem'
+                }}
+                onClick={handleSaveActivity}
+                disabled={isLogging}
+              >
+                <span>📝</span> {isLogging ? 'Recording Itinerary...' : 'Record Planned Itinerary to Impact Dashboard'}
+              </button>
+
+              {loggedStatus && (
+                <div style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: 600 }}>
+                  {loggedStatus}
+                </div>
+              )}
+            </div>
+
             {/* Heuristic Disclaimer */}
             <div
               style={{
@@ -347,5 +412,6 @@ export default function RoutePlanningSection({ matchedNGOs, sourceLocation }) {
         )}
       </div>
     </section>
+
   );
 }

@@ -134,6 +134,20 @@ Key architectural principles:
 5. Calculates step-by-step segment distances and validates distance/meal conservation invariants.
 6. Returns `200 OK` with `RouteOptimizeResponse` containing ordered waypoints, segment distances, total route distance, total meals, and pairwise distance matrix.
 
+### E. Impact Dashboard & Analytics Flow (`GET /api/dashboard/summary`, `GET /api/dashboard/recent`, `POST /api/dashboard/activity`)
+1. **Summary Retrieval (`GET /api/dashboard/summary`):**
+   - Reads recorded activities from `backend/data/activity_history.json`.
+   - Sums predicted surplus, allocated meals, NGO matches, route stops, and transit distances.
+   - Computes allocation rate percentage ($\frac{\text{Allocated}}{\text{Predicted}} \times 100\%$).
+   - Loads factual evaluation metrics directly from `ai-engine/evaluation/final_results.json` (MAE: `14.58`, RMSE: `20.69`, $R^2$: `0.9543`).
+   - Returns structured `DashboardResponse`.
+2. **Recent Activities Retrieval (`GET /api/dashboard/recent`):**
+   - Validates `1 <= limit <= 100`.
+   - Returns activity records ordered descending by timestamp.
+3. **Workflow Activity Recording (`POST /api/dashboard/activity`):**
+   - Validates that `allocated_meals <= predicted_surplus_meals + 0.01` and non-negativity.
+   - Generates unique ID (`ACT_YYYYMMDD_HHMMSS_XXX`), UTC ISO timestamp, and appends to persistent storage.
+
 ---
 
 ## 4. Error Handling Matrix
@@ -148,6 +162,8 @@ Key architectural principles:
 | Invalid latitude/longitude coordinates | `422` | Validation Error JSON | Coordinates out of valid geographic range. |
 | Empty NGO list in route planning | `422` | Validation Error JSON | Route optimization requires at least one recipient stop. |
 | Duplicate NGO IDs in route request | `422` | Validation Error JSON | Each route stop must have a unique identifier. |
+| Allocated meals exceed surplus in activity | `422` | Validation Error JSON | Inconsistent activity data violates physical conservation. |
+| Invalid activity query limit ($<1$ or $>100$) | `422` | Validation Error JSON | Query limit out of acceptable operational bounds. |
 | Model files missing or unreadable | `503` | Service Unavailable JSON | Server artifact path or storage error. |
 | Unhandled runtime error | `500` | Internal Server Error JSON | Safe sanitized message preventing stack trace leakage. |
 
@@ -159,14 +175,15 @@ The backend is verified through automated test suites:
 - `backend/tests/test_prediction_api.py` (10 tests): Health endpoint, prediction inference, schema boundary validation, data leakage prevention, model metadata.
 - `backend/tests/test_ngo_matching.py` (10 tests): NGO capacity constraints, zero surplus, multi-NGO distribution, dietary filtering, invalid inputs.
 - `backend/tests/test_route_optimization.py` (10 tests): Single/multiple NGO routing, nearest-neighbor sequencing, Haversine accuracy, distance/meal sum invariants, error rejections.
+- `backend/tests/test_analytics_dashboard.py` (12 tests): Empty activity history, aggregation accuracy, allocation rate %, bounds validation, ML evaluation loading, and REST endpoints.
 - `backend/tests/test_e2e_workflow.py` (1 test): Complete end-to-end integration passing real Random Forest prediction outputs directly into the NGO matching service.
 
-All 31 test cases execute deterministically with 100% pass rate.
+All 43 test cases execute deterministically with 100% pass rate.
 
 ---
 
 ## 6. Current Boundaries & Limitations
-- **Stateless Inference:** The backend does not persist predictions or matching events to an external SQL/NoSQL database at this stage.
+- **Local Activity Store:** Activity logs reside in a demonstration JSON file (`backend/data/activity_history.json`) suitable for prototype evaluation.
 - **Rule-Based Matching & Routing:** NGO matching and route planning are purely deterministic algorithms; they do not utilize machine learning.
 - **Straight-Line Haversine Approximation:** Route distances represent straight-line coordinates rather than road turn-by-turn routing.
 - **Synthetic NGO Dataset:** NGO profiles are synthetic demo representations for academic prototyping.
@@ -183,4 +200,6 @@ The React/Vite web application (`frontend/`) interacts seamlessly with the FastA
 4. **Result Rendering:** The `ResultCard.jsx` component displays the forecast, model metadata, and logistics recommendations returned by the backend.
 5. **Redistribution Planning:** The `NGOMatchingSection.jsx` component consumes the predicted surplus from the ResultCard, presents optional dietary and location filters, and queries `POST /api/match-ngos` to display matched recipient organizations and capacity allocations.
 6. **Dispatch Routing:** The `RoutePlanningSection.jsx` component consumes the matched recipient centers, sends `POST /api/optimize-route`, and renders a sequenced delivery timeline with distance breakdowns.
+7. **Impact Analytics & Activity Logging:** The `ImpactDashboard.jsx` component loads `GET /api/dashboard/summary` and `GET /api/dashboard/recent`, and allows users to persist planned itineraries via `POST /api/dashboard/activity`.
+
 

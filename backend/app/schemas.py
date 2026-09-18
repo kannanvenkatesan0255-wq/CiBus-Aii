@@ -404,3 +404,108 @@ class RouteOptimizeResponse(BaseModel):
     )
 
 
+# =====================================================================
+# Impact Dashboard & Analytics Schemas
+# =====================================================================
+
+class ActivityRecordCreate(BaseModel):
+    """
+    Input schema to record a completed prediction, NGO matching, and route planning activity.
+    """
+    source_name: str = Field(
+        default="Central Dining Facility",
+        description="Name of the food preparation establishment"
+    )
+    predicted_surplus_meals: float = Field(
+        ...,
+        ge=0.0,
+        description="Forecasted excess meals from ML model (non-negative)"
+    )
+    allocated_meals: float = Field(
+        ...,
+        ge=0.0,
+        description="Total meals allocated across matched NGOs (non-negative)"
+    )
+    matched_ngo_count: int = Field(
+        ...,
+        ge=0,
+        description="Count of partner recipient NGOs matched"
+    )
+    route_stop_count: int = Field(
+        ...,
+        ge=0,
+        description="Count of distribution stops in planned route"
+    )
+    route_distance_km: float = Field(
+        ...,
+        ge=0.0,
+        description="Total estimated route distance in km"
+    )
+    status: Optional[str] = Field(
+        default="planned",
+        description="Activity status ('planned', 'completed', 'cancelled')"
+    )
+    notes: Optional[str] = Field(
+        default=None,
+        description="Optional contextual remarks or event notes"
+    )
+
+    @model_validator(mode="after")
+    def validate_allocation_bounds(self) -> "ActivityRecordCreate":
+        if self.allocated_meals > self.predicted_surplus_meals + 0.01:
+            raise ValueError(
+                f"Data Consistency Error: Allocated meals ({self.allocated_meals}) "
+                f"cannot exceed predicted surplus ({self.predicted_surplus_meals})."
+            )
+        return self
+
+
+class ActivityRecord(ActivityRecordCreate):
+    """
+    Stored activity item with assigned identifier and ISO timestamp.
+    """
+    activity_id: str
+    timestamp: str
+
+
+class ModelPerformanceMetrics(BaseModel):
+    """
+    Factual performance metrics of the trained ML model loaded from evaluation artifacts.
+    """
+    model_name: str
+    mae: float = Field(..., description="Mean Absolute Error in meals (average magnitude of errors)")
+    rmse: float = Field(..., description="Root Mean Squared Error in meals (penalizes large deviations)")
+    r2: float = Field(..., description="Proportion of variance explained by regression model relative to mean baseline")
+    evaluation_dataset: str = "Held-out unseen test set (N=1,600 records)"
+    note: str = "R² represents the proportion of explained variance and is not a classification accuracy percentage."
+
+
+class DashboardSummary(BaseModel):
+    """
+    Aggregated operational impact statistics derived from recorded workflows.
+    """
+    total_predicted_surplus_meals: float
+    total_allocated_meals: float
+    allocation_rate_pct: float
+    total_matched_ngos: int
+    total_route_stops: int
+    total_route_distance_km: float
+    total_activities: int
+    data_source_mode: str = "Local demonstration activity store (JSON)"
+
+
+class DashboardResponse(BaseModel):
+    """
+    Consolidated response payload for the Impact Dashboard.
+    """
+    summary: DashboardSummary
+    model_performance: ModelPerformanceMetrics
+    status: str = "success"
+    message: str = "Dashboard operational metrics and ML model performance retrieved successfully."
+    disclaimer: str = (
+        "Demonstration Dashboard: Metrics summarize planned redistribution workflows and estimated "
+        "Haversine transit distances. Confirmed real-world physical delivery requires on-ground verification."
+    )
+
+
+

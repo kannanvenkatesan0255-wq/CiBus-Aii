@@ -103,17 +103,18 @@ The service layer cleanly decouples UI views from HTTP endpoints:
 
 ## 7. Extended UI Workflow: Prediction to Logistics Dispatch
 
-The CIBUS-AI dashboard implements a clean, 3-stage user journey:
-1. **Stage 1 (Prediction):** Enter 9 operational inputs in `PredictionForm.jsx` and generate surplus forecast in `ResultCard.jsx`.
-2. **Stage 2 (Redistribution Matching):** Filter by dietary constraints and donor location in `NGOMatchingSection.jsx` to allocate portions across partner shelters.
-3. **Stage 3 (Logistics Route Planning):** Sequence delivery stops in `RoutePlanningSection.jsx` using Haversine distance matrix calculations and Nearest-Neighbor graph heuristics.
+The CIBUS-AI dashboard implements a clean, 4-stage user journey:
+1. **Stage 1 (Impact Analytics):** Review aggregate redistribution metrics and active ML evaluation performance in `ImpactDashboard.jsx`.
+2. **Stage 2 (Prediction):** Enter 9 operational inputs in `PredictionForm.jsx` and generate surplus forecast in `ResultCard.jsx`.
+3. **Stage 3 (Redistribution Matching):** Filter by dietary constraints and donor location in `NGOMatchingSection.jsx` to allocate portions across partner shelters.
+4. **Stage 4 (Logistics Route Planning):** Sequence delivery stops in `RoutePlanningSection.jsx` using Haversine distance matrix calculations and Nearest-Neighbor graph heuristics, with one-click saving to the activity log.
 
 ---
 
 ## 8. Verification & Automated Testing
 
 The frontend is verified via `frontend/tests/frontend_test.cjs`:
-1. Full directory and component file existence (including `RoutePlanningSection.jsx`).
+1. Full directory and component file existence (including `ImpactDashboard.jsx` and `RoutePlanningSection.jsx`).
 2. Form schema completeness (all 9 operational features).
 3. Data leakage audit confirming zero presence of `Meals_Sold`.
 4. Payload structure alignment with backend Pydantic models.
@@ -127,6 +128,11 @@ The frontend is verified via `frontend/tests/frontend_test.cjs`:
 12. `optimizeRoute` API integration in `predictionService.js`.
 13. Route timeline visualization and distance summary metrics.
 14. End-to-end component wiring in `App.jsx`.
+15. `ImpactDashboard.jsx` component rendering and operational metric cards.
+16. Dashboard API methods (`getDashboardSummary`, `getRecentActivities`, `recordActivity`) in `predictionService.js`.
+17. Header navigation bar links.
+18. Root dashboard state integration in `App.jsx`.
 
-All 14 automated tests execute deterministically with a 100% pass rate.
+All 18 automated tests execute deterministically with a 100% pass rate.
+
 
