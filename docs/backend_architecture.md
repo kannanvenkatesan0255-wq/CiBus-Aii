@@ -126,6 +126,14 @@ Key architectural principles:
    Ensuring: $\sum \text{Allocated}_i \le \text{Predicted Surplus}$.
 7. Returns `200 OK` with `NGOMatchResponse` including ranked recipients, allocated portions, distances, match scores, and remaining unallocated surplus.
 
+### D. Route Optimization Flow (`POST /api/optimize-route`)
+1. Client issues `POST /api/optimize-route` with `source` (name, latitude, longitude) and `ngos` (list of matched recipient centers with allocated meal counts).
+2. Pydantic validates non-empty list ($N \ge 1$), geographic coordinate boundaries, non-negative meal quantities, and enforces unique `ngo_id` constraints.
+3. `RouteOptimizationService.optimize_route()` computes an $(N+1) \times (N+1)$ pairwise Haversine distance matrix.
+4. Traverses the graph from the food source using a greedy **Nearest-Neighbor** heuristic ($O(N^2)$), sequencing stops by minimal marginal transit distance.
+5. Calculates step-by-step segment distances and validates distance/meal conservation invariants.
+6. Returns `200 OK` with `RouteOptimizeResponse` containing ordered waypoints, segment distances, total route distance, total meals, and pairwise distance matrix.
+
 ---
 
 ## 4. Error Handling Matrix
@@ -138,6 +146,8 @@ Key architectural principles:
 | Presence of `Meals_Sold` | `422` | Data Leakage Violation JSON | Post-service outcome cannot enter pre-service prediction. |
 | Negative surplus in NGO matching | `422` | Validation Error JSON | Surplus meals must be non-negative. |
 | Invalid latitude/longitude coordinates | `422` | Validation Error JSON | Coordinates out of valid geographic range. |
+| Empty NGO list in route planning | `422` | Validation Error JSON | Route optimization requires at least one recipient stop. |
+| Duplicate NGO IDs in route request | `422` | Validation Error JSON | Each route stop must have a unique identifier. |
 | Model files missing or unreadable | `503` | Service Unavailable JSON | Server artifact path or storage error. |
 | Unhandled runtime error | `500` | Internal Server Error JSON | Safe sanitized message preventing stack trace leakage. |
 
@@ -148,15 +158,17 @@ Key architectural principles:
 The backend is verified through automated test suites:
 - `backend/tests/test_prediction_api.py` (10 tests): Health endpoint, prediction inference, schema boundary validation, data leakage prevention, model metadata.
 - `backend/tests/test_ngo_matching.py` (10 tests): NGO capacity constraints, zero surplus, multi-NGO distribution, dietary filtering, invalid inputs.
+- `backend/tests/test_route_optimization.py` (10 tests): Single/multiple NGO routing, nearest-neighbor sequencing, Haversine accuracy, distance/meal sum invariants, error rejections.
 - `backend/tests/test_e2e_workflow.py` (1 test): Complete end-to-end integration passing real Random Forest prediction outputs directly into the NGO matching service.
 
-All 21 test cases execute deterministically with 100% pass rate.
+All 31 test cases execute deterministically with 100% pass rate.
 
 ---
 
 ## 6. Current Boundaries & Limitations
 - **Stateless Inference:** The backend does not persist predictions or matching events to an external SQL/NoSQL database at this stage.
-- **Rule-Based Matching:** NGO matching is purely deterministic and heuristic; it does not utilize machine learning.
+- **Rule-Based Matching & Routing:** NGO matching and route planning are purely deterministic algorithms; they do not utilize machine learning.
+- **Straight-Line Haversine Approximation:** Route distances represent straight-line coordinates rather than road turn-by-turn routing.
 - **Synthetic NGO Dataset:** NGO profiles are synthetic demo representations for academic prototyping.
 - **Zero Retraining:** The backend strictly consumes the trained model; online learning or automatic continuous retraining is intentionally avoided to preserve reproducibility.
 
@@ -170,3 +182,5 @@ The React/Vite web application (`frontend/`) interacts seamlessly with the FastA
 3. **CORS Configuration:** The backend CORS middleware permits communication from Vite development origins (`http://localhost:5173` and `http://127.0.0.1:5173`).
 4. **Result Rendering:** The `ResultCard.jsx` component displays the forecast, model metadata, and logistics recommendations returned by the backend.
 5. **Redistribution Planning:** The `NGOMatchingSection.jsx` component consumes the predicted surplus from the ResultCard, presents optional dietary and location filters, and queries `POST /api/match-ngos` to display matched recipient organizations and capacity allocations.
+6. **Dispatch Routing:** The `RoutePlanningSection.jsx` component consumes the matched recipient centers, sends `POST /api/optimize-route`, and renders a sequenced delivery timeline with distance breakdowns.
+

@@ -101,15 +101,32 @@ The service layer cleanly decouples UI views from HTTP endpoints:
 
 ---
 
-## 7. Verification & Automated Testing
+## 7. Extended UI Workflow: Prediction to Logistics Dispatch
+
+The CIBUS-AI dashboard implements a clean, 3-stage user journey:
+1. **Stage 1 (Prediction):** Enter 9 operational inputs in `PredictionForm.jsx` and generate surplus forecast in `ResultCard.jsx`.
+2. **Stage 2 (Redistribution Matching):** Filter by dietary constraints and donor location in `NGOMatchingSection.jsx` to allocate portions across partner shelters.
+3. **Stage 3 (Logistics Route Planning):** Sequence delivery stops in `RoutePlanningSection.jsx` using Haversine distance matrix calculations and Nearest-Neighbor graph heuristics.
+
+---
+
+## 8. Verification & Automated Testing
 
 The frontend is verified via `frontend/tests/frontend_test.cjs`:
-1. Full directory and component file existence.
+1. Full directory and component file existence (including `RoutePlanningSection.jsx`).
 2. Form schema completeness (all 9 operational features).
 3. Data leakage audit confirming zero presence of `Meals_Sold`.
 4. Payload structure alignment with backend Pydantic models.
 5. Result card rendering and avoidance of false accuracy claims.
 6. Form reset and state restoration.
 7. Vite production bundle compilation (`npm run build`).
+8. `NGOMatchingSection.jsx` component and demo dataset disclaimer.
+9. `matchNGOs` API integration in `predictionService.js`.
+10. Dietary and location preset controls in `NGOMatchingSection.jsx`.
+11. `RoutePlanningSection.jsx` component and heuristic disclaimer.
+12. `optimizeRoute` API integration in `predictionService.js`.
+13. Route timeline visualization and distance summary metrics.
+14. End-to-end component wiring in `App.jsx`.
 
-All 7 automated tests execute with a 100% pass rate.
+All 14 automated tests execute deterministically with a 100% pass rate.
+

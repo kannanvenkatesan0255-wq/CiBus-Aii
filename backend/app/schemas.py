@@ -266,3 +266,141 @@ class NGOMatchResponse(BaseModel):
     status: str
     message: str
 
+
+# =====================================================================
+# Route Optimization & Pickup Planning Schemas
+# =====================================================================
+
+class RouteSource(BaseModel):
+    """
+    Geographic origin representing the food donor (caterer, hostel, restaurant).
+    """
+    name: str = Field(
+        ...,
+        description="Name of the food preparation facility or dispatch point",
+        examples=["Central Dining Hall"]
+    )
+    latitude: float = Field(
+        ...,
+        ge=-90.0,
+        le=90.0,
+        description="Latitude of origin point (-90.0 to 90.0)",
+        examples=[13.0067]
+    )
+    longitude: float = Field(
+        ...,
+        ge=-180.0,
+        le=180.0,
+        description="Longitude of origin point (-180.0 to 180.0)",
+        examples=[80.2026]
+    )
+
+
+class RouteNGOItem(BaseModel):
+    """
+    Individual recipient stop candidate with allocated surplus portions.
+    """
+    ngo_id: str = Field(
+        ...,
+        description="Unique identifier of recipient organization",
+        examples=["NGO_001"]
+    )
+    name: str = Field(
+        ...,
+        description="Name of recipient organization",
+        examples=["Annai Teresa Food Relief Foundation"]
+    )
+    latitude: float = Field(
+        ...,
+        ge=-90.0,
+        le=90.0,
+        description="Latitude of recipient center (-90.0 to 90.0)",
+        examples=[13.0067]
+    )
+    longitude: float = Field(
+        ...,
+        ge=-180.0,
+        le=180.0,
+        description="Longitude of recipient center (-180.0 to 180.0)",
+        examples=[80.2026]
+    )
+    allocated_meals: float = Field(
+        ...,
+        ge=0.0,
+        description="Allocated meal quantity for this stop (>= 0.0)",
+        examples=[150.0]
+    )
+
+
+class RouteOptimizeRequest(BaseModel):
+    """
+    Input schema requesting heuristic route optimization from source to recipient NGOs.
+    """
+    source: RouteSource = Field(
+        ...,
+        description="Food generation facility origin"
+    )
+    ngos: List[RouteNGOItem] = Field(
+        ...,
+        min_length=1,
+        description="List of matched recipient NGOs to visit (minimum 1)",
+        examples=[[
+            {"ngo_id": "NGO_001", "name": "Annai Teresa", "latitude": 13.0067, "longitude": 80.2026, "allocated_meals": 100.0}
+        ]]
+    )
+
+    @field_validator("ngos")
+    @classmethod
+    def validate_unique_ngos(cls, ngos: List[RouteNGOItem]) -> List[RouteNGOItem]:
+        if not ngos:
+            raise ValueError("At least one recipient NGO stop must be provided for route planning.")
+        
+        seen_ids = set()
+        for ngo in ngos:
+            if ngo.ngo_id in seen_ids:
+                raise ValueError(f"Duplicate NGO identifier '{ngo.ngo_id}' detected. Each stop must have a unique NGO_ID.")
+            seen_ids.add(ngo.ngo_id)
+        return ngos
+
+
+class RouteStop(BaseModel):
+    """
+    Single sequential waypoint in the optimized distribution route.
+    """
+    sequence: int = Field(..., description="0-indexed route stop number")
+    type: str = Field(..., description="'source' for dispatch origin or 'ngo' for recipient center")
+    ngo_id: Optional[str] = Field(default=None, description="NGO identifier if type is 'ngo'")
+    name: str = Field(..., description="Location or organization name")
+    latitude: float = Field(..., description="Latitude coordinate")
+    longitude: float = Field(..., description="Longitude coordinate")
+    allocated_meals: float = Field(..., description="Meal portions delivered at this stop")
+    distance_from_previous_km: float = Field(..., description="Haversine distance from previous waypoint in km")
+
+
+class RouteSummary(BaseModel):
+    """
+    Aggregate metrics summarizing the planned distribution itinerary.
+    """
+    number_of_stops: int = Field(..., description="Total count of recipient NGO drop-offs")
+    total_distance_km: float = Field(..., description="Total route transit distance in km (Haversine straight-line sum)")
+    total_allocated_meals: float = Field(..., description="Total sum of surplus meal portions distributed")
+    start_location: str = Field(..., description="Name of origin facility")
+
+
+class RouteOptimizeResponse(BaseModel):
+    """
+    Output payload containing the sequenced route plan, distance breakdown, and summary.
+    """
+    source: RouteSource
+    route: List[RouteStop]
+    summary: RouteSummary
+    distance_matrix: Optional[List[List[float]]] = None
+    location_names: Optional[List[str]] = None
+    status: str = "success"
+    message: str = "Route optimized successfully using nearest-neighbor heuristic."
+    disclaimer: str = (
+        "Demo Route Planner: Route distance is estimated using straight-line geographic coordinates "
+        "(Haversine formula) and a greedy nearest-neighbor heuristic. Does not use live traffic or road networks."
+    )
+
+

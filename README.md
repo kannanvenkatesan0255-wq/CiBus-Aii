@@ -276,28 +276,31 @@ CIBUS-AI/
 │   │   ├── schemas.py                   # Pydantic input/output schemas & validation
 │   │   ├── services/
 │   │   │   ├── prediction_service.py    # Service layer bridging FastAPI to ML engine
-│   │   │   └── ngo_matching_service.py  # Rule-based NGO matching & allocation
+│   │   │   ├── ngo_matching_service.py  # Rule-based NGO matching & allocation
+│   │   │   └── route_optimization_service.py # Graph routing & nearest-neighbor heuristics
 │   │   └── routes/
 │   │       ├── prediction.py            # Prediction and model metadata REST routes
-│   │       └── ngo_matching.py          # NGO matching & redistribution route
+│   │       ├── ngo_matching.py          # NGO matching & redistribution route
+│   │       └── route_optimization.py    # Delivery route sequencing route
 │   ├── data/
 │   │   └── ngos.csv                     # Synthetic partner NGO dataset
 │   ├── tests/
 │   │   ├── test_prediction_api.py       # Prediction API test suite (10 tests passing)
 │   │   ├── test_ngo_matching.py         # NGO matching test suite (10 tests passing)
+│   │   ├── test_route_optimization.py   # Route optimization test suite (10 tests passing)
 │   │   └── test_e2e_workflow.py         # Complete end-to-end integration test
 │   ├── requirements.txt                 # Backend dependencies
 │   └── README.md                        # Backend documentation
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/                  # Header, Hero, Form, ResultCard, NGOMatching, Roadmap
+│   │   ├── components/                  # Header, Hero, Form, ResultCard, NGOMatching, RoutePlanning
 │   │   ├── services/                    # predictionService.js API bridge
 │   │   ├── styles/                      # index.css & App.css design system
 │   │   ├── App.jsx                      # Main dashboard layout
 │   │   └── main.jsx                     # React DOM root
 │   ├── tests/
-│   │   └── frontend_test.cjs            # Automated frontend test runner (10 tests passing)
+│   │   └── frontend_test.cjs            # Automated frontend test runner (14 tests passing)
 │   ├── package.json                     # Vite & React dependencies
 │   ├── vite.config.js                   # Proxy & dev server config
 │   ├── .env.example                     # Environment template
@@ -311,6 +314,7 @@ CIBUS-AI/
 │   ├── backend_architecture.md          # Backend integration & API design
 │   ├── frontend_architecture.md         # Frontend design & component flow
 │   ├── ngo_matching.md                  # NGO matching & redistribution logistics
+│   ├── route_optimization.md            # Route optimization & nearest-neighbor heuristics
 │   ├── pbl_report_content.md            # Chennai Institute of Tech PBL Report
 │   ├── references.md                    # IEEE formatted reference list
 │   ├── appendix.md                      # Code & experimental appendix
@@ -321,6 +325,31 @@ CIBUS-AI/
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## 16. Route Optimization & Pickup Planning
+
+```
+Food Surplus Prediction (Random Forest ML)
+        ↓
+Predicted Surplus Meals (e.g. 230.38 meals)
+        ↓
+NGO Matching & Capacity Allocation (Rule-Based Heuristic)
+        ↓
+Matched Partner Centers & Allocated Meals
+        ↓
+Route Optimization Engine (Haversine Matrix + Nearest-Neighbor Traversal)
+        ↓
+Sequenced Delivery Plan:
+Food Source → Stop 1 (NGO 1) → Stop 2 (NGO 2) → Stop 3 (NGO 3)
+```
+
+- **Why Route Planning is Needed:** Minimizes transit time, reduces transport overhead, and prevents perishable food degradation between commercial kitchens and recipient centers.
+- **Algorithm:** Pairwise Haversine distance matrix + greedy Nearest-Neighbor (NN) sequencing starting at the food generation facility.
+- **Distinction from ML:** Route sequencing is a deterministic graph algorithm ($O(N^2)$), **NOT** a Machine Learning model.
+- **Invariants:** Total distance strictly equals sum of segment distances ($\sum d_i = D_{\text{total}}$), and total distributed meals strictly equals allocated meals ($\sum m_i = M_{\text{total}}$).
+
 
 ---
 

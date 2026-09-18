@@ -10,7 +10,7 @@ const LOCATION_PRESETS = [
   { label: 'Location Coordinates Unavailable (General Match)', lat: null, lon: null }
 ];
 
-export default function NGOMatchingSection({ predictedSurplus }) {
+export default function NGOMatchingSection({ predictedSurplus, onMatchesUpdated }) {
   const [foodType, setFoodType] = useState('Both');
   const [selectedLocationIdx, setSelectedLocationIdx] = useState(0);
   const [maxMatches, setMaxMatches] = useState(4);
@@ -44,6 +44,9 @@ export default function NGOMatchingSection({ predictedSurplus }) {
         max_matches: maxMatches
       });
       setMatchingResult(result);
+      if (onMatchesUpdated) {
+        onMatchesUpdated(result.matches || []);
+      }
     } catch (err) {
       setError(err.message || 'Failed to match candidate recipient NGOs.');
     } finally {
@@ -54,7 +57,11 @@ export default function NGOMatchingSection({ predictedSurplus }) {
   const handleClearResults = () => {
     setMatchingResult(null);
     setError('');
+    if (onMatchesUpdated) {
+      onMatchesUpdated([]);
+    }
   };
+
 
   return (
     <section className="info-section ngo-matching-section" id="ngo-matching">
@@ -246,9 +253,28 @@ export default function NGOMatchingSection({ predictedSurplus }) {
                 ))}
               </div>
             )}
+
+            {matchingResult.matches.length > 0 && (
+              <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+                <a
+                  href="#route-planning"
+                  className="btn btn-primary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    background: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)',
+                    textDecoration: 'none'
+                  }}
+                >
+                  🗺️ Proceed to Route Optimization & Pickup Planning ↓
+                </a>
+              </div>
+            )}
           </div>
         )}
       </div>
     </section>
+
   );
 }

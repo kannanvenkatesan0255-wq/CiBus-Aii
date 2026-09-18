@@ -158,6 +158,38 @@ runTest('Verify dietary and location controls in NGOMatchingSection.jsx', () => 
   assert.strictEqual(ngoCode.includes("match_score"), true);
 });
 
+// Test 11: Verify RoutePlanningSection.jsx exists and displays demo planner disclaimer
+runTest('Verify RoutePlanningSection.jsx component exists with heuristic disclaimer', () => {
+  const routeCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'RoutePlanningSection.jsx'), 'utf8');
+  assert.strictEqual(routeCode.includes("Demo Route Planner"), true);
+  assert.strictEqual(routeCode.includes("Route Optimization & Pickup Planning"), true);
+  assert.strictEqual(routeCode.includes("Haversine"), true);
+});
+
+// Test 12: Verify optimizeRoute API integration in predictionService.js
+runTest('Verify optimizeRoute API client in predictionService.js', () => {
+  const serviceCode = fs.readFileSync(path.join(SRC_DIR, 'services', 'predictionService.js'), 'utf8');
+  assert.strictEqual(serviceCode.includes("optimizeRoute"), true);
+  assert.strictEqual(serviceCode.includes("endpoint = `${API_BASE_URL}/api/optimize-route`"), true);
+});
+
+// Test 13: Verify route timeline visualization and summary elements in RoutePlanningSection
+runTest('Verify route timeline visualization and summary metrics in RoutePlanningSection.jsx', () => {
+  const routeCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'RoutePlanningSection.jsx'), 'utf8');
+  assert.strictEqual(routeCode.includes("total_distance_km"), true);
+  assert.strictEqual(routeCode.includes("number_of_stops"), true);
+  assert.strictEqual(routeCode.includes("total_allocated_meals"), true);
+  assert.strictEqual(routeCode.includes("distance_from_previous_km"), true);
+  assert.strictEqual(routeCode.includes("distance_matrix"), true);
+});
+
+// Test 14: Verify App.jsx imports and mounts RoutePlanningSection
+runTest('Verify App.jsx connects NGOMatchingSection to RoutePlanningSection', () => {
+  const appCode = fs.readFileSync(path.join(SRC_DIR, 'App.jsx'), 'utf8');
+  assert.strictEqual(appCode.includes("RoutePlanningSection"), true);
+  assert.strictEqual(appCode.includes("matchedNGOs"), true);
+});
+
 console.log(`\n----------------------------------------------------------------------`);
 console.log(`Test Execution Summary: ${passedTests} / ${totalTests} tests passed`);
 console.log(`======================================================================\n`);
@@ -167,4 +199,5 @@ if (passedTests === totalTests) {
 } else {
   process.exit(1);
 }
+
 

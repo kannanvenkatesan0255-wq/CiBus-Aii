@@ -206,6 +206,10 @@ The refined model (`n_estimators=200`, `max_depth=15`, `max_features=0.8`) was s
 | **Model Evaluation** | `ai-engine/evaluation/evaluate_model.py` | `food_surplus_model.pkl`, $X_{\text{test}}, y_{\text{test}}$ | Computes MAE, RMSE, $R^2$, residuals, exports diagnostic scatter plots. | `predictions.csv`, `actual_vs_predicted.png`, `residual_analysis.png` |
 | **Prediction Engine** | `ai-engine/prediction/predict.py` | Pre-service operational dict or CLI args | Validates inputs, rejects `Meals_Sold`, transforms and predicts surplus. | Predicted surplus meals (float) |
 | **Inference Tests** | `ai-engine/prediction/test_predict.py` | 9 operational & boundary scenarios | Unittest suite verifying predictions, boundary checks, and leakage rejection. | Test execution logs |
+| **NGO Matching Service** | `backend/app/services/ngo_matching_service.py` | Predicted surplus, dietary type, coordinates | Rule-based multi-factor scoring & constraint-based capacity allocation. | Matched NGO list & allocations |
+| **Route Optimization Service** | `backend/app/services/route_optimization_service.py` | Source coordinates, matched NGO coordinates | Pairwise Haversine distance matrix & greedy Nearest-Neighbor route sequencing ($O(N^2)$). | Sequenced itinerary & segment distances |
+| **Route Optimization API** | `backend/app/routes/route_optimization.py` | `POST /api/optimize-route` | Pydantic validation, coordinate checks, duplicate prevention, and response serialization. | `RouteOptimizeResponse` JSON |
+
 
 ## 5.2 Key Code Snippets
 
@@ -343,6 +347,7 @@ By strictly preventing data leakage and providing a modular inference interface,
 
 ## 8.2 Future Scope
 1. **Real-World Deployment & Sensor Telemetry:** Partner with commercial cafeterias to ingest physical POS registers, smart kitchen bin scales, and real-time food temperature sensors.
-2. **Dynamic Multi-Stop Route Optimization:** Vehicle routing problem (VRP) solver calculating optimal multi-stop pickup and drop-off sequences for volunteer food couriers.
+2. **Turn-by-Turn Road Routing & Multi-Vehicle VRP:** Extend the current straight-line Haversine heuristic by integrating real-world road networks (OpenStreetMap / OSRM) and multi-vehicle Capacitated Vehicle Routing Problem with Time Windows (CVRPTW).
 3. **Automated Volunteer Dispatch & Mobile Notifications:** Push-notification system alerting nearby verified food recovery couriers for rapid transit.
 4. **Interactive GIS & Telemetry Dashboard:** Full-scale GIS mapping with live GPS driver tracking and food shelf-life countdown monitors.
+

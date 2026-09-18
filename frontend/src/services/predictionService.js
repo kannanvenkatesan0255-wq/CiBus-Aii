@@ -163,3 +163,58 @@ export async function matchNGOs(matchParams) {
   }
 }
 
+/**
+ * Plans an optimized delivery itinerary from food donor source to matched recipient NGOs.
+ * 
+ * @param {Object} routeParams - { source: { name, latitude, longitude }, ngos: [...] }
+ * @returns {Promise<Object>} Route optimization response with ordered stops and summary
+ */
+export async function optimizeRoute(routeParams) {
+  const endpoint = `${API_BASE_URL}/api/optimize-route`;
+
+  const payload = {
+    source: {
+      name: String(routeParams.source?.name || 'Food Dispatch Facility').trim(),
+      latitude: parseFloat(routeParams.source?.latitude || 13.0067),
+      longitude: parseFloat(routeParams.source?.longitude || 80.2026)
+    },
+    ngos: (routeParams.ngos || []).map(ngo => ({
+      ngo_id: String(ngo.ngo_id),
+      name: String(ngo.ngo_name || ngo.name || ngo.ngo_id),
+      latitude: parseFloat(ngo.latitude || (ngo.source_latitude ?? 13.0067)),
+      longitude: parseFloat(ngo.longitude || (ngo.source_longitude ?? 80.2026)),
+      allocated_meals: parseFloat(ngo.allocated_meals || 0)
+    }))
+  };
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Route optimization error (HTTP ${response.status})`;
+      try {
+        const errData = await response.json();
+        if (errData.detail) errorMessage = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
+      } catch {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error("Unable to connect to CIBUS-AI Route Optimization API. Please ensure the backend is running.");
+    }
+    throw error;
+  }
+}
+
+

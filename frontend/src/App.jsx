@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import PredictionForm from './components/PredictionForm';
 import ResultCard from './components/ResultCard';
 import NGOMatchingSection from './components/NGOMatchingSection';
+import RoutePlanningSection from './components/RoutePlanningSection';
 import HowItWorks from './components/HowItWorks';
 import FutureModules from './components/FutureModules';
 import Footer from './components/Footer';
@@ -12,6 +13,7 @@ import './styles/App.css';
 
 export default function App() {
   const [prediction, setPrediction] = useState(null);
+  const [matchedNGOs, setMatchedNGOs] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,6 +34,7 @@ export default function App() {
 
   const handleReset = () => {
     setPrediction(null);
+    setMatchedNGOs([]);
     setError('');
     setIsLoading(false);
   };
@@ -60,6 +63,12 @@ export default function App() {
         {/* Extended Redistribution Module (Active when prediction exists or accessible for demo) */}
         <NGOMatchingSection
           predictedSurplus={prediction ? prediction.predicted_surplus_meals : 0}
+          onMatchesUpdated={(matches) => setMatchedNGOs(matches)}
+        />
+
+        {/* Route Optimization & Pickup Planning Module */}
+        <RoutePlanningSection
+          matchedNGOs={matchedNGOs}
         />
 
         <HowItWorks />
@@ -70,3 +79,4 @@ export default function App() {
     </div>
   );
 }
+
