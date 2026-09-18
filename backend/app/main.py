@@ -3,16 +3,20 @@ CIBUS-AI - FastAPI Main Application Entry Point
 File: backend/app/main.py
 
 Purpose:
-Main entry point for the CIBUS-AI Surplus Prediction REST API:
-1. Configures FastAPI application metadata, CORS middleware, and API routers.
-2. Exposes /health check endpoint verifying ML model and preprocessor readiness.
-3. Exposes Swagger (/docs) and ReDoc (/redoc) API documentation.
-4. Mounts the prediction and model information routers.
+Main entry point for the CIBUS-AI Surplus Prediction & Redistribution REST API:
+1. Configures FastAPI application metadata, dynamic CORS middleware, and API routers.
+2. Implements centralized exception handlers preventing internal stack trace leaks.
+3. Exposes /health check endpoint verifying ML model and preprocessor readiness.
+4. Exposes Swagger (/docs) and ReDoc (/redoc) API documentation.
 """
 
+import os
 import sys
+import logging
 from pathlib import Path
-from fastapi import FastAPI, status
+from typing import List
+from fastapi import FastAPI, Request, HTTPException, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -27,12 +31,29 @@ if str(BACKEND_DIR) not in sys.path:
 if str(AI_ENGINE_DIR) not in sys.path:
     sys.path.insert(0, str(AI_ENGINE_DIR))
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger("cibus_ai.api")
+
 from app.schemas import HealthResponse
 from app.routes.prediction import router as prediction_router
 from app.routes.ngo_matching import router as ngo_matching_router
 from app.routes.route_optimization import router as route_optimization_router
 from app.routes.dashboard import router as dashboard_router
 from app.services.prediction_service import PredictionService
+
+# Environment configuration
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+# Dynamic CORS Configuration from Environment
+raw_origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000"
+)
+ALLOWED_ORIGINS: List[str] = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
 
 # Instantiate FastAPI application
 app = FastAPI(
@@ -47,23 +68,61 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configure CORS for development and frontend integration
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000"
-]
-
+# Apply CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# ==============================================================================
+# Centralized Error Handlers (Information Leakage Prevention)
+# ==============================================================================
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Sanitizes request validation errors into a clean, human-readable format.
+    """
+    formatted_errors = []
+    for err in exc.errors():
+        field = ".".join(str(loc) for loc in err.get("loc", []) if loc != "body")
+        msg = err.get("msg", "Invalid value")
+        formatted_errors.append(f"{field}: {msg}" if field else msg)
+
+    logger.warning("Validation failure on %s: %s", request.url.path, formatted_errors)
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": formatted_errors if len(formatted_errors) > 1 else formatted_errors[0]}
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Standardizes HTTP exception responses.
+    """
+    logger.info("HTTP %d on %s: %s", exc.status_code, request.url.path, exc.detail)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    """
+    Catches all unhandled server exceptions to prevent raw stack traces or
+    filesystem directory structures from leaking to API clients.
+    """
+    logger.exception("Unhandled server exception processing %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "An unexpected server error occurred. Please try again later."}
+    )
+
 
 # Mount API Routers
 app.include_router(prediction_router)
@@ -72,8 +131,7 @@ app.include_router(route_optimization_router)
 app.include_router(dashboard_router)
 
 
-
-
+# System Health & Root Endpoints
 @app.get(
     "/health",
     response_model=HealthResponse,
@@ -85,6 +143,7 @@ app.include_router(dashboard_router)
 async def health_check() -> HealthResponse:
     """
     Health check endpoint verifying application and ML artifact status.
+    Does not leak internal filesystem paths or secret configurations.
     """
     model_ok, prep_ok = PredictionService.check_artifacts()
     is_healthy = model_ok and prep_ok
@@ -115,4 +174,6 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    host = os.getenv("API_HOST", "127.0.0.1")
+    port = int(os.getenv("API_PORT", "8000"))
+    uvicorn.run("app.main:app", host=host, port=port, reload=(ENVIRONMENT == "development"))

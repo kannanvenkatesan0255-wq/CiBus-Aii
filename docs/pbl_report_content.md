@@ -282,6 +282,11 @@ It takes the forecasted surplus $\hat{y}$ from the ML engine and matches candida
 - **Activity Store:** Local JSON persistence tracking planned redistribution itineraries.
 - **Dynamic Telemetry:** Real-time KPI cards reflecting cumulative planned allocations, average allocation rates, and verified ML model diagnostics ($R^2 = 0.9543$).
 
+### Extended Module 5: Security Hardening & Exception Sanitization
+- **Centralized Exception Sanitization:** Global FastAPI exception handlers intercept validation and server errors, preventing raw Python stack traces, memory addresses, or filesystem paths from leaking to clients.
+- **Frontend Error Boundary:** React ErrorBoundary component protecting the user interface against client-side rendering crashes with structured recovery actions.
+- **Dynamic CORS Whitelisting:** Configurable origin filters mapped to environment variables (`CORS_ORIGINS`).
+
 ---
 
 # CHAPTER 6 — RESULTS AND DISCUSSION
@@ -304,10 +309,11 @@ It takes the forecasted surplus $\hat{y}$ from the ML engine and matches candida
 3. **Tolerance Reliability:** **$65.38\%$** of predictions fall within $\pm 15$ meals, and **$82.81\%$** fall within $\pm 25$ meals.
 4. **Key Drivers (MDI):** `Meals_Prepared` ($48.96\%$), `Event_Type` ($16.51\%$), and `Weather` ($16.03\%$) account for over $81\%$ of predictive decisions.
 
-## 6.4 Limitations
-- **Synthetic Behavioral Distributions:** Does not yet incorporate live point-of-sale or IoT scale sensor streams.
-- **Static Window:** Single batch predictions prior to service start; mid-service changes require re-querying.
-- **Homogeneous Portions:** Measures aggregate meal portions rather than per-ingredient perishability.
+## 6.4 Limitations & Prototype Boundaries
+- **Synthetic Behavioral Distributions:** Evaluated on synthetic operational data; real-world catering exhibits micro-climate variability.
+- **Static Window:** Single batch predictions prior to service start; dynamic intra-service preparation requires re-querying.
+- **Prototype Authentication Boundary:** Single-user laboratory demonstration prototype; multi-tenant RBAC and OAuth2 are documented for future production scope.
+- **Heuristic Routing:** Straight-line Haversine distances rather than turn-by-turn live road navigation.
 
 ---
 
@@ -358,9 +364,10 @@ The CIBUS-AI machine learning project successfully designed, trained, tuned, and
 
 By strictly preventing data leakage and providing a modular inference interface, CIBUS-AI proves the feasibility of pre-service surplus forecasting to power proactive food redistribution.
 
-## 8.2 Future Scope
-1. **Real-World Deployment & Sensor Telemetry:** Partner with commercial cafeterias to ingest physical POS registers, smart kitchen bin scales, and real-time food temperature sensors.
+## 8.2 Future Scope & Production Roadmap
+1. **Multi-Tenant Authentication & RBAC:** OAuth2 with JWT authentication and granular roles for Food Donors, NGO Shelters, and Couriers.
 2. **Turn-by-Turn Road Routing & Multi-Vehicle VRP:** Extend the current straight-line Haversine heuristic by integrating real-world road networks (OpenStreetMap / OSRM) and multi-vehicle Capacitated Vehicle Routing Problem with Time Windows (CVRPTW).
 3. **Automated Volunteer Dispatch & Mobile Notifications:** Push-notification system alerting nearby verified food recovery couriers for rapid transit.
 4. **Interactive GIS & Telemetry Dashboard:** Full-scale GIS mapping with live GPS driver tracking and food shelf-life countdown monitors.
+5. **Managed Relational Storage:** Transition from JSON activity history to managed PostgreSQL with row-level security.
 

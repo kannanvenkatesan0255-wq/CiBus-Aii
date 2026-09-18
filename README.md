@@ -438,10 +438,13 @@ python -u -m unittest ai-engine/prediction/test_predict.py
 
 ### 3. Backend API Execution & Testing
 ```bash
+# Copy environment configuration
+cp backend/.env.example backend/.env
+
 # Start FastAPI backend development server
 uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 
-# Run all backend unit and integration test suites (43 tests)
+# Run all backend unit, integration, and security test suites (54 tests)
 python -m unittest discover -s backend/tests -p "test_*.py"
 
 # Run interactive prediction CLI demo
@@ -453,19 +456,31 @@ python -u ai-engine/prediction/predict.py --day Saturday --weather Sunny --custo
 # Navigate to frontend directory
 cd frontend
 
+# Copy environment configuration
+cp .env.example .env
+
 # Install Node dependencies
 npm install
 
 # Start Vite React development server
 npm run dev
 
-# Run automated frontend test suite (21 tests)
+# Run automated frontend test suite (23 tests)
 npm test
 ```
 
 ---
 
-## 19. Academic Scope & Limitations
+## 19. Security & Deployment Notes
+- **Environment Configuration:** Copy `.env.example` to `.env` to configure `API_HOST`, `API_PORT`, `CORS_ORIGINS`, and `VITE_API_BASE_URL`. Never commit actual `.env` files.
+- **CORS Whitelisting:** Dynamic CORS configured via `CORS_ORIGINS` environment variable instead of insecure wildcard origins.
+- **Error Sanitization:** Centralized exception handlers catch all server-side errors, logging technical details internally while returning safe, sanitized messages to clients without leaking stack traces.
+- **XSS & Rendering Guard:** Root React component wrapped in `ErrorBoundary` with strict prohibition of `dangerouslySetInnerHTML`.
+- **Prototype Authentication Boundary:** As a college ML Project-Based Learning prototype operating on synthetic demonstration data, multi-tenant enterprise authentication (JWT/OAuth2) is intentionally out of scope and documented for future production roadmap.
+
+---
+
+## 20. Academic Scope & Limitations
 - **Synthetic Behavioral Data:** Evaluated on synthetic operational records; real-world catering establishments exhibit micro-climate and seasonal variability not fully modeled.
 - **Static Pre-Service Window:** Forecasts apply prior to food preparation and do not stream dynamic intra-shift kitchen replenishment.
 - **Heuristic Route Approximation:** Distances use straight-line Haversine math and greedy nearest-neighbor sequencing without live traffic, one-way road networks, or live GPS telemetry.
@@ -473,7 +488,7 @@ npm test
 
 ---
 
-## 20. Repository & Author Information
+## 21. Repository & Author Information
 - **Repository:** [https://github.com/kannanvenkatesan0255-wq/CiBus-Aii.git](https://github.com/kannanvenkatesan0255-wq/CiBus-Aii.git)
 - **Institution:** Chennai Institute of Technology
 - **Course:** Machine Learning Project-Based Learning (PBL)

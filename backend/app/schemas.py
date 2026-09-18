@@ -3,11 +3,12 @@ CIBUS-AI - Pydantic Request & Response Schemas
 File: backend/app/schemas.py
 
 Purpose:
-Defines strict type checking, validation rules, and JSON schemas for API endpoints.
-Enforces domain constraints matching the CIBUS-AI ML dataset and strictly prohibits
-post-service data leakage (e.g. Meals_Sold).
+Defines strict type checking, validation rules, bounded constraints, and JSON schemas
+for all API endpoints. Enforces domain constraints matching the CIBUS-AI ML dataset and
+strictly prohibits post-service data leakage (e.g. Meals_Sold).
 """
 
+import math
 from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -18,6 +19,13 @@ VALID_FESTIVALS = ["No", "Diwali", "Eid", "Christmas", "New Year"]
 VALID_EVENT_TYPES = ["Regular", "Buffet", "Corporate", "Banquet"]
 
 
+def validate_finite_number(v: float, field_name: str) -> float:
+    """Helper to reject NaN and Infinity."""
+    if math.isnan(v) or math.isinf(v):
+        raise ValueError(f"Field '{field_name}' must be a finite numerical value.")
+    return v
+
+
 class PredictionRequest(BaseModel):
     """
     Input schema for real-time surplus meal prediction.
@@ -25,40 +33,47 @@ class PredictionRequest(BaseModel):
     """
     Day: str = Field(
         ...,
+        max_length=20,
         description="Day of the week (e.g. 'Monday', 'Friday', 'Saturday')",
         examples=["Saturday"]
     )
     Weather: str = Field(
         ...,
+        max_length=20,
         description="Forecasted weather condition (Sunny, Cloudy, Rainy, Stormy)",
         examples=["Sunny"]
     )
     Customers_Forecast: int = Field(
         ...,
         ge=0,
-        description="Expected customer footfall count (non-negative integer)",
+        le=50000,
+        description="Expected customer footfall count (0 to 50,000)",
         examples=[350]
     )
     Meals_Prepared: int = Field(
         ...,
         ge=0,
-        description="Total meal portions prepared by kitchen (non-negative integer)",
+        le=100000,
+        description="Total meal portions prepared by kitchen (0 to 100,000)",
         examples=[400]
     )
     Festival: Optional[str] = Field(
         default="No",
+        max_length=30,
         description="Active holiday/festival (No, Diwali, Eid, Christmas, New Year)",
         examples=["No"]
     )
     Event_Type: Optional[str] = Field(
         default="Regular",
+        max_length=30,
         description="Dining or catering service format (Regular, Buffet, Corporate, Banquet)",
         examples=["Regular"]
     )
     Staff_Count: int = Field(
         ...,
         ge=1,
-        description="Active kitchen and service staff on duty (minimum 1)",
+        le=1000,
+        description="Active kitchen and service staff on duty (1 to 1,000)",
         examples=[12]
     )
     Avg_Rating: float = Field(
@@ -88,6 +103,11 @@ class PredictionRequest(BaseModel):
                         "and cannot be accepted as a pre-service prediction input."
                     )
         return data
+
+    @field_validator("Avg_Rating")
+    @classmethod
+    def validate_rating(cls, v: float) -> float:
+        return validate_finite_number(v, "Avg_Rating")
 
     @field_validator("Day")
     @classmethod
@@ -179,7 +199,7 @@ class ModelInfoResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """
-    System health and artifact availability status.
+    System health and artifact availability status without leaking internal filesystem paths.
     """
     status: str
     model_loaded: bool
@@ -194,11 +214,13 @@ class NGOMatchRequest(BaseModel):
     predicted_surplus_meals: float = Field(
         ...,
         ge=0.0,
+        le=100000.0,
         description="Predicted quantity of excess meals to redistribute",
         examples=[230.4]
     )
     food_type: Optional[str] = Field(
         default="Both",
+        max_length=30,
         description="Dietary classification of prepared food (Both, Vegetarian, Non-Vegetarian)",
         examples=["Both"]
     )
@@ -206,23 +228,28 @@ class NGOMatchRequest(BaseModel):
         default=None,
         ge=-90.0,
         le=90.0,
-        description="Latitude of food-generating establishment (optional for distance calculation)",
+        description="Latitude of food-generating establishment (-90.0 to 90.0)",
         examples=[12.9716]
     )
     source_longitude: Optional[float] = Field(
         default=None,
         ge=-180.0,
         le=180.0,
-        description="Longitude of food-generating establishment (optional for distance calculation)",
+        description="Longitude of food-generating establishment (-180.0 to 180.0)",
         examples=[80.2000]
     )
     max_matches: Optional[int] = Field(
         default=5,
         ge=1,
         le=20,
-        description="Maximum number of candidate recipient NGOs to allocate",
+        description="Maximum number of candidate recipient NGOs to allocate (1 to 20)",
         examples=[5]
     )
+
+    @field_validator("predicted_surplus_meals")
+    @classmethod
+    def validate_surplus(cls, v: float) -> float:
+        return validate_finite_number(v, "predicted_surplus_meals")
 
     @field_validator("food_type")
     @classmethod
@@ -277,6 +304,8 @@ class RouteSource(BaseModel):
     """
     name: str = Field(
         ...,
+        min_length=1,
+        max_length=100,
         description="Name of the food preparation facility or dispatch point",
         examples=["Central Dining Hall"]
     )
@@ -295,6 +324,16 @@ class RouteSource(BaseModel):
         examples=[80.2026]
     )
 
+    @field_validator("latitude")
+    @classmethod
+    def validate_lat(cls, v: float) -> float:
+        return validate_finite_number(v, "latitude")
+
+    @field_validator("longitude")
+    @classmethod
+    def validate_lon(cls, v: float) -> float:
+        return validate_finite_number(v, "longitude")
+
 
 class RouteNGOItem(BaseModel):
     """
@@ -302,11 +341,15 @@ class RouteNGOItem(BaseModel):
     """
     ngo_id: str = Field(
         ...,
+        min_length=1,
+        max_length=50,
         description="Unique identifier of recipient organization",
         examples=["NGO_001"]
     )
     name: str = Field(
         ...,
+        min_length=1,
+        max_length=100,
         description="Name of recipient organization",
         examples=["Annai Teresa Food Relief Foundation"]
     )
@@ -327,9 +370,25 @@ class RouteNGOItem(BaseModel):
     allocated_meals: float = Field(
         ...,
         ge=0.0,
+        le=50000.0,
         description="Allocated meal quantity for this stop (>= 0.0)",
         examples=[150.0]
     )
+
+    @field_validator("latitude")
+    @classmethod
+    def validate_lat(cls, v: float) -> float:
+        return validate_finite_number(v, "latitude")
+
+    @field_validator("longitude")
+    @classmethod
+    def validate_lon(cls, v: float) -> float:
+        return validate_finite_number(v, "longitude")
+
+    @field_validator("allocated_meals")
+    @classmethod
+    def validate_meals(cls, v: float) -> float:
+        return validate_finite_number(v, "allocated_meals")
 
 
 class RouteOptimizeRequest(BaseModel):
@@ -343,7 +402,8 @@ class RouteOptimizeRequest(BaseModel):
     ngos: List[RouteNGOItem] = Field(
         ...,
         min_length=1,
-        description="List of matched recipient NGOs to visit (minimum 1)",
+        max_length=50,
+        description="List of matched recipient NGOs to visit (1 to 50 stops)",
         examples=[[
             {"ngo_id": "NGO_001", "name": "Annai Teresa", "latitude": 13.0067, "longitude": 80.2026, "allocated_meals": 100.0}
         ]]
@@ -414,41 +474,54 @@ class ActivityRecordCreate(BaseModel):
     """
     source_name: str = Field(
         default="Central Dining Facility",
+        max_length=100,
         description="Name of the food preparation establishment"
     )
     predicted_surplus_meals: float = Field(
         ...,
         ge=0.0,
+        le=100000.0,
         description="Forecasted excess meals from ML model (non-negative)"
     )
     allocated_meals: float = Field(
         ...,
         ge=0.0,
+        le=100000.0,
         description="Total meals allocated across matched NGOs (non-negative)"
     )
     matched_ngo_count: int = Field(
         ...,
         ge=0,
+        le=1000,
         description="Count of partner recipient NGOs matched"
     )
     route_stop_count: int = Field(
         ...,
         ge=0,
+        le=1000,
         description="Count of distribution stops in planned route"
     )
     route_distance_km: float = Field(
         ...,
         ge=0.0,
+        le=50000.0,
         description="Total estimated route distance in km"
     )
     status: Optional[str] = Field(
         default="planned",
+        max_length=30,
         description="Activity status ('planned', 'completed', 'cancelled')"
     )
     notes: Optional[str] = Field(
         default=None,
+        max_length=500,
         description="Optional contextual remarks or event notes"
     )
+
+    @field_validator("predicted_surplus_meals", "allocated_meals", "route_distance_km")
+    @classmethod
+    def validate_finite_numbers(cls, v: float, info) -> float:
+        return validate_finite_number(v, info.field_name)
 
     @model_validator(mode="after")
     def validate_allocation_bounds(self) -> "ActivityRecordCreate":
@@ -506,6 +579,3 @@ class DashboardResponse(BaseModel):
         "Demonstration Dashboard: Metrics summarize planned redistribution workflows and estimated "
         "Haversine transit distances. Confirmed real-world physical delivery requires on-ground verification."
     )
-
-
-

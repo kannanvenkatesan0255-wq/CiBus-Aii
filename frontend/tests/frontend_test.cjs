@@ -4,7 +4,7 @@
  * 
  * Purpose:
  * Validates frontend components, service integration, leakage prevention,
- * workflow state coordination, SVG location visualization, and API compatibility.
+ * workflow state coordination, SVG location visualization, ErrorBoundary, and API compatibility.
  */
 
 const fs = require('fs');
@@ -47,6 +47,7 @@ runTest('Verify frontend directory structure and core files exist', () => {
     'src/services/predictionService.js',
     'src/components/Header.jsx',
     'src/components/Hero.jsx',
+    'src/components/ErrorBoundary.jsx',
     'src/components/WorkflowStepper.jsx',
     'src/components/PredictionForm.jsx',
     'src/components/ResultCard.jsx',
@@ -231,7 +232,7 @@ runTest('Verify RouteMapVisualization.jsx implements deterministic SVG coordinat
   assert.strictEqual(mapCode.includes("Geographic Visualization Note"), true);
 });
 
-// Test 18: Verify RoutePlanningSection.jsx supports custom coordinates and integrates RouteMapVisualization
+// Test 18: Verify RoutePlanningSection.jsx supports custom coordinates and RouteMapVisualization
 runTest('Verify RoutePlanningSection.jsx supports custom coordinates and RouteMapVisualization', () => {
   const routeCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'RoutePlanningSection.jsx'), 'utf8');
   assert.strictEqual(routeCode.includes("RouteMapVisualization"), true);
@@ -259,7 +260,27 @@ runTest('Verify App.jsx connects WorkflowStepper, NGO matching, and RoutePlannin
   assert.strictEqual(appCode.includes("handleActivityLogged"), true);
 });
 
-// Test 21: Verify Vite build succeeds without compilation errors
+// Test 21: Verify ErrorBoundary.jsx exists and main.jsx wraps App
+runTest('Verify ErrorBoundary.jsx exists and wraps the root application in main.jsx', () => {
+  const mainCode = fs.readFileSync(path.join(SRC_DIR, 'main.jsx'), 'utf8');
+  const errorBoundaryCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'ErrorBoundary.jsx'), 'utf8');
+  assert.strictEqual(mainCode.includes("ErrorBoundary"), true);
+  assert.strictEqual(errorBoundaryCode.includes("componentDidCatch"), true);
+  assert.strictEqual(errorBoundaryCode.includes("Reload Application"), true);
+});
+
+// Test 22: Verify absence of dangerous HTML injections (XSS prevention)
+runTest('Verify absence of dangerouslySetInnerHTML and direct script injection in frontend components', () => {
+  const componentFiles = fs.readdirSync(path.join(SRC_DIR, 'components'));
+  componentFiles.forEach(file => {
+    if (file.endsWith('.jsx')) {
+      const code = fs.readFileSync(path.join(SRC_DIR, 'components', file), 'utf8');
+      assert.strictEqual(code.includes("dangerouslySetInnerHTML"), false, `Forbidden dangerouslySetInnerHTML found in ${file}`);
+    }
+  });
+});
+
+// Test 23: Verify Vite build succeeds without compilation errors
 runTest('Verify Vite builds the production bundle cleanly', () => {
   const { execSync } = require('child_process');
   const buildOutput = execSync('npm run build', { cwd: FRONTEND_DIR, encoding: 'utf8' });
