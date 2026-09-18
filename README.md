@@ -191,7 +191,7 @@ python ai-engine/prediction/predict.py \
 CIBUS-AI provides an asynchronous RESTful backend service built on **FastAPI** and **Uvicorn** to expose the trained Random Forest engine for web and mobile client integration.
 
 ### Data Flow:
-$$\text{Client (HTTP JSON)} \longrightarrow \text{FastAPI Route} \longrightarrow \text{Pydantic Schema Validation} \longrightarrow \text{Prediction Service} \longrightarrow \text{Trained Model} \longrightarrow \text{Surplus Forecast JSON}$$
+$$\text{React Frontend} \longrightarrow \text{FastAPI Route} \longrightarrow \text{Pydantic Schema Validation} \longrightarrow \text{Prediction Service} \longrightarrow \text{Trained Model} \longrightarrow \text{Surplus Forecast JSON}$$
 
 ### Key Endpoints:
 - `GET /health` – Confirms server responsiveness and verifies ML model & preprocessor loading.
@@ -201,7 +201,19 @@ $$\text{Client (HTTP JSON)} \longrightarrow \text{FastAPI Route} \longrightarrow
 
 ---
 
-## 14. Project Directory Structure
+## 14. Frontend User Interface (React + Vite)
+
+A responsive single-page web dashboard built with **React**, **Vite**, and a dark glassmorphism design system for commercial and institutional dining managers.
+
+### Key Capabilities:
+- **Operational Form:** 9 pre-service inputs (`Day`, `Weather`, `Customers_Forecast`, `Meals_Prepared`, `Event_Type`, etc.).
+- **Zero Data Leakage:** Rejects post-service features (`Meals_Sold`) on both client and server.
+- **Real-Time Health Monitor:** Displays backend and ML artifact availability with non-aggressive heartbeats.
+- **Prominent Forecast Card:** Renders forecasted surplus meal portions and automated logistics advisories.
+
+---
+
+## 15. Project Directory Structure
 ```
 CIBUS-AI/
 ├── ai-engine/
@@ -257,12 +269,27 @@ CIBUS-AI/
 │   ├── requirements.txt                 # Backend dependencies
 │   └── README.md                        # Backend documentation
 │
+├── frontend/
+│   ├── src/
+│   │   ├── components/                  # Header, Hero, Form, ResultCard, Roadmap
+│   │   ├── services/                    # predictionService.js API bridge
+│   │   ├── styles/                      # index.css & App.css design system
+│   │   ├── App.jsx                      # Main dashboard layout
+│   │   └── main.jsx                     # React DOM root
+│   ├── tests/
+│   │   └── frontend_test.cjs            # Automated frontend test runner (7 tests)
+│   ├── package.json                     # Vite & React dependencies
+│   ├── vite.config.js                   # Proxy & dev server config
+│   ├── .env.example                     # Environment template
+│   └── README.md                        # Frontend documentation
+│
 ├── docs/
 │   ├── project_overview.md              # Scoping & problem formulation
 │   ├── dataset_description.md           # Formal data schema & leakage rules
 │   ├── model_documentation.md           # Complete ML methodology & metrics
 │   ├── prediction_documentation.md      # Inference guide & API reference
 │   ├── backend_architecture.md          # Backend integration & API design
+│   ├── frontend_architecture.md         # Frontend design & component flow
 │   ├── pbl_report_content.md            # Chennai Institute of Tech PBL Report
 │   ├── references.md                    # IEEE formatted reference list
 │   ├── appendix.md                      # Code & experimental appendix
@@ -276,7 +303,7 @@ CIBUS-AI/
 
 ---
 
-## 15. Installation & Reproduction Guide
+## 16. Installation & Reproduction Guide
 
 ### 1. Environment Setup
 ```bash
@@ -326,16 +353,31 @@ python -u -m unittest backend/tests/test_prediction_api.py
 python -u ai-engine/prediction/predict.py --day Saturday --weather Sunny --customers 350 --meals 400 --event Regular --rating 4.3
 ```
 
+### 4. Frontend Web Dashboard Execution & Testing
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install Node dependencies
+npm install
+
+# Start Vite React development server
+npm run dev
+
+# Run automated frontend test suite (7 tests)
+npm test
+```
+
 ---
 
-## 15. Limitations
+## 17. Limitations
 - **Synthetic Behavioral Data:** Evaluated on synthetic operational records; real-world catering establishments exhibit micro-climate and seasonal variability not fully modeled.
 - **Static Pre-Service Window:** Forecasts apply prior to food preparation and do not stream dynamic intra-shift kitchen replenishment.
 - **No Logistics Integration Yet:** Downstream NGO pairing, vehicle routing, and web UI are scheduled for subsequent project milestones.
 
 ---
 
-## 16. Repository & Author Information
+## 18. Repository & Author Information
 - **Repository:** [https://github.com/kannanvenkatesan0255-wq/CiBus-Aii.git](https://github.com/kannanvenkatesan0255-wq/CiBus-Aii.git)
 - **Institution:** Chennai Institute of Technology
 - **Course:** Machine Learning Project-Based Learning (PBL)

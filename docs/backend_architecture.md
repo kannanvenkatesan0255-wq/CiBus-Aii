@@ -155,4 +155,13 @@ All 10 tests execute deterministically with 100% pass rate.
 ## 6. Current Boundaries & Limitations
 - **Stateless Inference:** The backend does not persist predictions to an external SQL/NoSQL database at this stage.
 - **Zero Retraining:** The backend strictly consumes the trained model; online learning or automatic continuous retraining is intentionally avoided to preserve reproducibility.
-- **Future Scope:** Full-stack React client dashboard, NGO profile registration, geospatial Google Maps routing, and volunteer push notifications will interface with this API in subsequent development phases.
+
+---
+
+## 7. Frontend Integration Flow
+
+The React/Vite web application (`frontend/`) interacts seamlessly with the FastAPI backend:
+1. **Heartbeat Health Monitoring:** The `HealthStatus.jsx` component queries `GET /health` periodically (30s) to indicate backend and ML model availability to dining operators.
+2. **Prediction Submission:** The `PredictionForm.jsx` component collects 9 operational parameters, validates domain bounds on the client, and sends `POST /api/predict`.
+3. **CORS Configuration:** The backend CORS middleware permits communication from Vite development origins (`http://localhost:5173` and `http://127.0.0.1:5173`).
+4. **Result Rendering:** The `ResultCard.jsx` component displays the forecast, model metadata, and logistics recommendations returned by the backend.

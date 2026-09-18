@@ -37,3 +37,18 @@ Thumbs.db
 .vscode/
 .idea/
 *.sublime-workspace
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.timestamp-*.mjs
+
+
