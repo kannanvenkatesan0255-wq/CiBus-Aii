@@ -63,9 +63,15 @@ To strictly prevent **data leakage**, only pre-service operational and environme
 ---
 
 ## 7. Current Development Phase
-- **Phase:** **Phase 6 – Feature Importance Analysis Completed**
-- **Status:** Extracted Mean Decrease in Impurity (MDI) feature importances from `food_surplus_model.pkl`. Generated `ai-engine/plots/feature_importance.png`, `ai-engine/evaluation/feature_importance.csv`, and `ai-engine/evaluation/feature_importance_summary.json`.
-- **Top Drivers Identified:** `Meals_Prepared` (48.96%), `Event_Type` (16.51%), `Weather` (16.03% [Stormy: 10.93%]), `Staff_Count` (11.66%).
+- **Phase:** **Phase 7 – Final Model Evaluation Completed**
+- **Status:** Conducted full test-set evaluation ($N=1,600$) on `food_surplus_model.pkl`. Generated `ai-engine/plots/actual_vs_predicted.png`, `ai-engine/plots/residual_analysis.png`, `ai-engine/evaluation/predictions.csv`, and `ai-engine/evaluation/final_results.json`.
+- **Model Type:** Supervised Regression (`RandomForestRegressor`, `n_estimators=200`, `max_depth=15`, `max_features=0.8`).
+- **Final Evaluation Metrics:**
+  - $\text{MAE} = 14.5793$ meals
+  - $\text{RMSE} = 20.6869$ meals
+  - $R^2 = 0.9543$ (Explained Variance)
+  - Mean Residual Bias: $-0.2729$ meals (Near-zero systematic error)
+  - 82.81% of test predictions within $\pm 25$ meals.
 
 ---
 
@@ -76,7 +82,7 @@ The following modules represent subsequent milestones:
 - [x] **Baseline Model Training:** Random Forest baseline training ($n=100$) and baseline benchmark logging.
 - [x] **Final Model Training & Hyperparameter Tuning:** 3-Fold Cross-Validation parameter tuning, test evaluation, and baseline comparison.
 - [x] **Feature Importance Analysis:** Mean Decrease in Impurity (MDI) extraction, ranking tables, and diagnostic plot.
-- [ ] **Evaluation & Diagnostic Plotting:** True vs. Predicted residual analysis, MAE, RMSE, and $R^2$ evaluation plots.
+- [x] **Evaluation & Diagnostic Plotting:** True vs. Predicted residual analysis, MAE, RMSE, and $R^2$ evaluation plots.
 - [ ] **Standalone Prediction Interface:** Pre-service CLI and batch inference script.
 - [ ] **NGO Matching Engine:** Distance- and capacity-aware matching algorithm (*Future Milestone*).
 - [ ] **Dynamic Route Optimization:** Multi-stop pickup and drop route planning (*Future Milestone*).

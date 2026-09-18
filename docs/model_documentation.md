@@ -47,15 +47,15 @@ Regression models are evaluated using the following formal metrics:
 
 ### 1. Mean Absolute Error (MAE)
 $$\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|$$
-- Measures average prediction error magnitude in real physical meal units.
+- Measures the average absolute magnitude of prediction errors in the original physical units (meals).
 
 ### 2. Root Mean Squared Error (RMSE)
 $$\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}$$
-- Penalizes large prediction errors quadratically.
+- Measures the standard deviation of prediction residuals, penalizing larger deviations quadratically.
 
 ### 3. Coefficient of Determination ($R^2$ Score)
 $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}$$
-- Quantifies the proportion of target variance explained by input features relative to a naive mean predictor.
+- Quantifies the proportion of target variance explained by input features relative to a naive mean predictor ($\bar{y}$).
 
 ---
 
@@ -94,7 +94,7 @@ $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar
 
 ## 7. Baseline vs. Refined Comparison Summary
 
-| Metric | Baseline Model (Iter. 1) | Refined Model (Iter. 2) | Difference ($\Delta$) | Analysis |
+| Metric | Baseline Model (Iter. 1) | Refined Final Model (Iter. 2) | Difference ($\Delta$) | Analysis |
 | :--- | :---: | :---: | :---: | :--- |
 | **MAE** | 14.2939 meals | **14.5793 meals** | $+0.2854$ meals | Highly comparable ($\approx 14.4$ meals average error). |
 | **RMSE** | 20.5429 meals | **20.6869 meals** | $+0.1440$ meals | Highly comparable residual variance. |
@@ -104,56 +104,47 @@ $$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar
 
 ## 8. Feature Importance Analysis *(MDI Extraction)*
 
-### 1. Purpose of Feature Importance Analysis
-In a Machine Learning PBL project, model interpretability is vital for validating that the predictive engine relies on logical operational relationships rather than spurious artifacts, and for providing actionable operational insights to kitchen managers and food recovery coordinators.
+### Summary of Key Feature Drivers:
+- **`Meals_Prepared` (48.96%):** Primary scale driver setting the absolute surplus ceiling.
+- **`Event_Type` (16.51%):** Buffet/Banquet display formats vs. portion-controlled regular dining.
+- **`Weather` (16.03%, `Weather_Stormy`: 10.93%):** Footfall disruption shocks.
+- **`Staff_Count` (11.66%):** Kitchen throughput and operational capacity proxy.
 
-### 2. Method Used
-- **Algorithm Metric:** Mean Decrease in Impurity (MDI), computed across all 200 trees in the trained Random Forest ensemble.
-- **Model Evaluated:** `ai-engine/models/food_surplus_model.pkl`.
-- **Target:** `Surplus_Meals` (Leakage-free, `Meals_Sold` strictly omitted).
+> **Methodological Note:** Feature importance indicates predictive utility within the trained ensemble; it does not establish causal proof. Full ranking table saved in `ai-engine/evaluation/feature_importance.csv` and visualization in `ai-engine/plots/feature_importance.png`.
 
-### 3. Actual Ranked Feature Importance Results
+---
 
-#### Transformed Feature Importances (Top 12):
-| Rank | Transformed Feature | Importance (MDI) | Category |
-| :-: | :--- | :---: | :--- |
-| 1 | `Meals_Prepared` | **0.4896** (48.96%) | Numerical (Batch production volume) |
-| 2 | `Staff_Count` | **0.1166** (11.66%) | Numerical (Kitchen scale & capacity) |
-| 3 | `Weather_Stormy` | **0.1093** (10.93%) | Categorical One-Hot (Disruption factor) |
-| 4 | `Event_Type_Regular` | **0.0647** (6.47%) | Categorical One-Hot (Service format) |
-| 5 | `Event_Type_Buffet` | **0.0564** (5.64%) | Categorical One-Hot (Service format) |
-| 6 | `Weather_Rainy` | **0.0387** (3.87%) | Categorical One-Hot (Disruption factor) |
-| 7 | `Event_Type_Banquet` | **0.0343** (3.43%) | Categorical One-Hot (Service format) |
-| 8 | `Customers_Forecast` | **0.0246** (2.46%) | Numerical (Planned attendance) |
-| 9 | `Festival_No` | **0.0216** (2.16%) | Categorical One-Hot (Calendar baseline) |
-| 10 | `Event_Type_Corporate` | **0.0097** (0.97%) | Categorical One-Hot (Service format) |
-| 11 | `Special_Event` | **0.0079** (0.79%) | Binary Indicator |
-| 12 | `Weather_Sunny` | **0.0077** (0.77%) | Categorical One-Hot (Baseline weather) |
+## 9. Final Model Evaluation & Diagnostic Analysis
 
-#### Aggregated Logical Feature Importances (All 9 Features):
-| Rank | Original Feature | Aggregated Importance | Cumulative Share |
-| :-: | :--- | :---: | :---: |
-| 1 | **`Meals_Prepared`** | **0.4896** (48.96%) | 48.96% |
-| 2 | **`Event_Type`** | **0.1651** (16.51%) | 65.47% |
-| 3 | **`Weather`** | **0.1603** (16.03%) | 81.50% |
-| 4 | **`Staff_Count`** | **0.1166** (11.66%) | 93.16% |
-| 5 | **`Customers_Forecast`** | **0.0246** (2.46%) | 95.62% |
-| 6 | **`Festival`** | **0.0238** (2.38%) | 98.00% |
-| 7 | **`Special_Event`** | **0.0079** (0.79%) | 98.79% |
-| 8 | **`Avg_Rating`** | **0.0072** (0.72%) | 99.51% |
-| 9 | **`Day`** | **0.0048** (0.48%) | 100.00% |
+The final model (`food_surplus_model.pkl`) was evaluated on the held-out test partition ($N = 1,600$ samples, $20\%$ of total records) via `ai-engine/evaluation/evaluate_model.py`.
 
-### 4. Domain Interpretation of Key Features
-1. **`Meals_Prepared` (48.96%):** As the primary physical scale driver, the total volume of food batch-cooked dictates the absolute upper bound and scale of potential leftover variance.
-2. **`Event_Type` (16.51%):** Service format heavily governs leftover probability: buffets and banquets require high continuous safety buffer presentation, whereas regular dining allows portion control.
-3. **`Weather` (16.03%, specifically `Weather_Stormy` 10.93%):** Severe weather acts as a major external demand shock that sharply reduces walk-in footfall below forecasts, creating large unexpected surpluses.
-4. **`Staff_Count` (11.66%):** Serves as an operational proxy for kitchen throughput and commercial scale.
+### 1. Quantitative Performance Summary
+| Evaluation Metric | Test Set Value | Unit / Scale | Meaning for Problem |
+| :--- | :---: | :---: | :--- |
+| **Mean Absolute Error (MAE)** | **`14.5793`** | Meals | Average deviation between predicted surplus and ground truth. |
+| **Root Mean Squared Error (RMSE)** | **`20.6869`** | Meals | Standard deviation of residuals, penalizing larger prediction misses. |
+| **Coefficient of Determination ($R^2$)** | **`0.9543`** | Dimensionless $[-\infty, 1.0]$ | Model accounts for $95.43\%$ of total surplus variance. |
 
-### 5. Methodological Limitations of Feature Importance
+### 2. Descriptive Range & Distributional Diagnostics
+- **Actual Surplus Range ($y$):** $[1.00, 643.70]$ meals (Mean = $116.14$, Std = $96.72$)
+- **Predicted Surplus Range ($\hat{y}$):** $[11.93, 632.70]$ meals (Mean = $116.41$, Std = $93.97$)
+- **Mean Residual (Bias $\bar{e}$):** **`-0.2729 meals`** (Demonstrates virtually zero global bias)
+- **Standard Deviation of Residuals ($s_e$):** `20.6851 meals`
 
-> [!IMPORTANT]
-> **Causation vs. Correlation:** Feature importance indicates how useful a feature was to the trained model's predictive decisions; it does **not** establish a causal relationship.
+### 3. Practical Tolerance Intervals *(Explicitly distinct from accuracy)*
+- **Predictions within $\pm 10$ meals:** **49.38%** of test samples
+- **Predictions within $\pm 15$ meals:** **65.38%** of test samples
+- **Predictions within $\pm 25$ meals:** **82.81%** of test samples
 
-- **Impurity Bias:** MDI feature importance can favor continuous numerical variables (`Meals_Prepared`, `Staff_Count`) over one-hot binary flags because continuous features offer more candidate split points.
-- **Correlated Splitting:** When features are correlated (e.g., `Customers_Forecast` and `Meals_Prepared`), the ensemble splits importance across them, which can lower individual MDI scores for collinear features.
-- **Visual Evidence:** Diagnostic plot exported at `ai-engine/plots/feature_importance.png` and full ranking table logged in `ai-engine/evaluation/feature_importance.csv`.
+### 4. Actual vs. Predicted Visual Diagnostics
+- **Plot:** `ai-engine/plots/actual_vs_predicted.png`
+- **Observation:** Test sample predictions tightly cluster along the ideal $y = x$ reference diagonal across all surplus scales ($0$ to $640+$ meals), confirming linear calibration across both small local dining and large banquet service events.
+
+### 5. Residual Distribution Diagnostics
+- **Plot:** `ai-engine/plots/residual_analysis.png`
+- **Observation:** Residuals ($e_i = y_i - \hat{y}_i$) are evenly distributed around the horizontal zero line ($e = 0$). Slight heteroscedastic spread at higher surplus volumes ($>400$ meals) reflects natural physical scaling variance in large banquet operations.
+
+### 6. Limitations of the Final Evaluation
+- **Simulated Variance:** Evaluated on synthetic operational records; real-world commercial kitchen deployments will introduce unmodeled sensory noise and seasonal menu shifts.
+- **Static Pre-Service Horizon:** Estimates apply at batch preparation time and do not adapt dynamically to mid-shift operational adjustments.
+- **All Evaluation Artifacts:** Logged in `ai-engine/evaluation/final_results.json` and row-level predictions stored in `ai-engine/evaluation/predictions.csv`.

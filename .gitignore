@@ -27,6 +27,7 @@ ai-engine/dataset/*.scratch.csv
 ai-engine/plots/*.tmp.png
 !ai-engine/plots/feature_importance.png
 !ai-engine/plots/actual_vs_predicted.png
+!ai-engine/plots/residual_analysis.png
 !ai-engine/plots/.gitkeep
 *.log
 

@@ -1,0 +1,48 @@
+{
+    "model_name": "RandomForestRegressor",
+    "model_file": "food_surplus_model.pkl",
+    "target_variable": "Surplus_Meals",
+    "dataset_info": {
+        "total_records": 8000,
+        "train_size": 6400,
+        "test_size": 1600,
+        "feature_count": 25,
+        "random_state": 42
+    },
+    "hyperparameters": {
+        "n_estimators": 200,
+        "max_depth": 15,
+        "min_samples_split": 4,
+        "min_samples_leaf": 1,
+        "max_features": 0.8,
+        "random_state": 42
+    },
+    "metrics": {
+        "mae": 14.5793,
+        "rmse": 20.6869,
+        "r2": 0.9543
+    },
+    "descriptive_statistics": {
+        "actual_surplus": {
+            "min": 1.0,
+            "max": 643.7,
+            "mean": 116.14,
+            "std": 96.72
+        },
+        "predicted_surplus": {
+            "min": 11.93,
+            "max": 632.7,
+            "mean": 116.41,
+            "std": 93.97
+        },
+        "residuals": {
+            "mean": -0.2729,
+            "std": 20.6851
+        },
+        "tolerance_intervals": {
+            "pct_within_10_meals": 49.38,
+            "pct_within_15_meals": 65.38,
+            "pct_within_25_meals": 82.81
+        }
+    }
+}
