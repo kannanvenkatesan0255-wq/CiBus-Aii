@@ -24,7 +24,7 @@ export default function FutureModules() {
     <section className="info-section">
       <div className="section-header">
         <h2 className="section-title">Future Platform Roadmap</h2>
-        <p>Upcoming system modules scheduled for post-PBL expansion (Currently in design phase)</p>
+        <p>Upcoming system modules scheduled for future expansion (Currently in design phase)</p>
       </div>
 
       <div className="future-modules-grid">

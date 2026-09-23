@@ -79,7 +79,7 @@ export default function App() {
           onResetWorkflow={handleReset}
         />
 
-        {/* Operational Impact Dashboard & ML Performance Panel */}
+        {/* Operational Impact Dashboard */}
         <ImpactDashboard key={dashboardKey} />
 
         {/* Prediction Engine Stage */}

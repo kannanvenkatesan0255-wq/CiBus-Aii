@@ -29,7 +29,6 @@ export default function Header() {
         </nav>
 
         <div className="header-badges">
-          <span className="track-badge">CIT ML PBL</span>
           <HealthStatus />
         </div>
       </div>
