@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
+import MapboxRouteMap from './MapboxRouteMap';
 
 /**
- * RouteMapVisualization - SVG-based geographic coordinate & route planner visualization.
+ * RouteMapVisualization - Hybrid route planner visualization supporting
+ * interactive Mapbox GL satellite/street tiles and deterministic SVG coordinate projection.
  * 
  * Features:
- * - Deterministic coordinate normalization (bounds mapping + padding).
- * - Zero external map dependencies (no Google Maps API, no Leaflet tiles, no GPS tracking).
+ * - Mapbox GL integration with donor/NGO markers, route line, and popups.
+ * - Deterministic SVG coordinate normalization fallback (bounds mapping + padding).
+ * - Zero external API requirements when using SVG mode.
  * - Interactive node tooltips and path segment distance labels.
  * - Academic heuristic disclaimer banner.
  */
 export default function RouteMapVisualization({ route = [], source = null }) {
+  const hasMapboxToken = Boolean(import.meta.env.VITE_MAPBOX_ACCESS_TOKEN);
+  const [viewMode, setViewMode] = useState(hasMapboxToken ? 'mapbox' : 'svg');
   const [activeStopIdx, setActiveStopIdx] = useState(null);
 
   if (!route || route.length === 0) {
@@ -101,22 +106,58 @@ export default function RouteMapVisualization({ route = [], source = null }) {
         <h4 style={{ margin: 0, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f3f4f6' }}>
           <span>🗺️</span> Spatial Distribution & Sequence Map
         </h4>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          Relative coordinates projected via Haversine plane
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <button
+            type="button"
+            onClick={() => setViewMode('mapbox')}
+            style={{
+              background: viewMode === 'mapbox' ? 'var(--primary, #06b6d4)' : 'rgba(255, 255, 255, 0.05)',
+              color: viewMode === 'mapbox' ? '#ffffff' : 'var(--text-muted)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            🗺️ Mapbox Live Map
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('svg')}
+            style={{
+              background: viewMode === 'svg' ? 'var(--primary, #06b6d4)' : 'rgba(255, 255, 255, 0.05)',
+              color: viewMode === 'svg' ? '#ffffff' : 'var(--text-muted)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            📐 Schematic Vector
+          </button>
+        </div>
       </div>
 
-      <div
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 1) 100%)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          overflow: 'hidden',
-          position: 'relative',
-          boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.5)'
-        }}
-      >
-        <svg
+      {viewMode === 'mapbox' && hasMapboxToken ? (
+        <MapboxRouteMap route={route} source={source} />
+      ) : (
+        <div
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 1) 100%)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.5)'
+          }}
+        >
+          <svg
           viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
           style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '460px' }}
           role="img"
@@ -345,6 +386,7 @@ export default function RouteMapVisualization({ route = [], source = null }) {
           </div>
         )}
       </div>
+      )}
 
       {/* Academic / Heuristic Disclaimer */}
       <div

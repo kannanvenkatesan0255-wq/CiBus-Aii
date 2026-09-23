@@ -154,5 +154,29 @@
     "route_distance_km": 0.01,
     "status": "planned",
     "notes": "Automated E2E test verification on new computer"
+  },
+  {
+    "activity_id": "ACT_20260923_121145_014",
+    "timestamp": "2026-09-23T12:11:45Z",
+    "source_name": "Guindy Central Dispatch",
+    "predicted_surplus_meals": 32.15,
+    "allocated_meals": 32.15,
+    "matched_ngo_count": 1,
+    "route_stop_count": 1,
+    "route_distance_km": 5.87,
+    "status": "planned",
+    "notes": "Itinerary generated via nearest-neighbor routing (5.87 km)."
+  },
+  {
+    "activity_id": "ACT_20260923_124835_015",
+    "timestamp": "2026-09-23T12:48:35Z",
+    "source_name": "Guindy Central Dispatch Facility",
+    "predicted_surplus_meals": 230.38,
+    "allocated_meals": 230.38,
+    "matched_ngo_count": 1,
+    "route_stop_count": 1,
+    "route_distance_km": 0.8,
+    "status": "planned",
+    "notes": "E2E automated integration test workflow"
   }
 ]
