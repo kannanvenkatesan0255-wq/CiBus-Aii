@@ -15,7 +15,7 @@ Provides a clean, reusable inference interface for forecasting food surplus:
 import os
 import sys
 import argparse
-from typing import Dict, Any, Union, List, Optional
+from typing import Dict, Any, Union, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import joblib

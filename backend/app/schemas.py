@@ -277,6 +277,8 @@ class NGOMatchItem(BaseModel):
     food_type: str
     availability_status: str
     distance_km: Optional[float]
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     match_score: float
     reason: str
 

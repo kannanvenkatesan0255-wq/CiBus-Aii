@@ -107,10 +107,21 @@ cd backend
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Start FastAPI development server (runs at http://localhost:8000)
-uvicorn main:app --reload --port 8000
+# Start FastAPI development server (runs at http://127.0.0.1:8000)
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
-*Interactive API Swagger Documentation is accessible at [http://localhost:8000/docs](http://localhost:8000/docs).*
+*Interactive API Swagger Documentation is accessible at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) and health check at [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health).*
+
+### Windows One-Click Quickstart
+From the project root on Windows, you can double-click or run:
+```bat
+start_all.bat
+```
+Or start each service individually:
+```bat
+start_backend.bat    # Launches FastAPI backend on port 8000
+start_frontend.bat   # Launches Vite React frontend on port 5173
+```
 
 ### 3. Frontend Setup & Startup
 ```bash

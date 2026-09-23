@@ -173,6 +173,8 @@ class NGOMatchingService:
                 "food_type": ngo_food_type,
                 "availability_status": avail_status,
                 "distance_km": distance_km,
+                "latitude": lat,
+                "longitude": lon,
                 "match_score": match_score,
                 "reason": " • ".join(reasons) if reasons else "Eligible recipient center"
             })
