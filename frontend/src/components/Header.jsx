@@ -1,5 +1,4 @@
 import React from 'react';
-import HealthStatus from './HealthStatus';
 
 export default function Header() {
   return (
@@ -27,10 +26,6 @@ export default function Header() {
             🗺️ Routing
           </a>
         </nav>
-
-        <div className="header-badges">
-          <HealthStatus />
-        </div>
       </div>
     </header>
   );
