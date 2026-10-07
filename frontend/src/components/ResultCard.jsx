@@ -13,7 +13,7 @@ export default function ResultCard({ prediction, error, isLoading }) {
           {error}
         </div>
         <p className="card-subtitle">
-          Please verify your inputs or ensure the CIBUS-AI FastAPI server is running.
+          Please verify your inputs or ensure the CIBUS-AI prediction service is running.
         </p>
       </div>
     );
