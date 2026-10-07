@@ -48,12 +48,34 @@ from app.services.prediction_service import PredictionService
 # Environment configuration
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 
-# Dynamic CORS Configuration from Environment
-raw_origins = os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000"
-)
-ALLOWED_ORIGINS: List[str] = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+# Dynamic CORS Configuration supporting FRONTEND_URL and CORS_ORIGINS
+frontend_url_env = os.getenv("FRONTEND_URL", "").strip()
+cors_origins_env = os.getenv("CORS_ORIGINS", "").strip()
+
+# Default trusted origins for local development and preview environments
+allowed_origins_set = {
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+}
+
+# Add configured production frontend URLs
+if frontend_url_env:
+    for origin in frontend_url_env.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned:
+            allowed_origins_set.add(cleaned)
+
+if cors_origins_env:
+    for origin in cors_origins_env.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned:
+            allowed_origins_set.add(cleaned)
+
+ALLOWED_ORIGINS: List[str] = sorted(list(allowed_origins_set))
 
 # Instantiate FastAPI application
 app = FastAPI(
@@ -174,6 +196,7 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    host = os.getenv("API_HOST", "127.0.0.1")
-    port = int(os.getenv("API_PORT", "8000"))
+    # Support Render's PORT and 0.0.0.0 binding in production
+    host = os.getenv("HOST", os.getenv("API_HOST", "0.0.0.0"))
+    port = int(os.getenv("PORT", os.getenv("API_PORT", "8000")))
     uvicorn.run("app.main:app", host=host, port=port, reload=(ENVIRONMENT == "development"))

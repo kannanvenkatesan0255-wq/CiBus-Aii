@@ -1,0 +1,55 @@
+# ==============================================================================
+# CIBUS-AI - Render Blueprint Deployment Specification
+# File: render.yaml
+#
+# Purpose:
+# Automates production deployment on Render:
+# 1. Backend: Python FastAPI Web Service (serves ML prediction & redistribution APIs)
+# 2. Frontend: React + Vite Static Site (SPA with client-side routing)
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Backend Web Service (FastAPI + RandomForest ML Engine)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: cibus-ai-backend
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+  # ----------------------------------------------------------------------------
+  # 2. Frontend Static Site (React 19 + Vite SPA)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: cibus-ai-frontend
+    runtime: static
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_MAPBOX_TOKEN
+        sync: false

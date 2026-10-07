@@ -12,10 +12,14 @@ ENV/
 env.bak/
 venv.bak/
 
-# ML Model Artefacts and Pickles (keep directory structure tracked)
+# ML Model Artefacts and Pickles (track production models for cloud deployment)
 ai-engine/models/*.pkl
 ai-engine/models/*.joblib
 !ai-engine/models/.gitkeep
+!ai-engine/models/food_surplus_model.pkl
+!ai-engine/models/label_encoders.pkl
+!ai-engine/models/food_surplus_preprocessor.pkl
+!ai-engine/models/preprocessor.joblib
 
 # Datasets
 ai-engine/dataset/*.tmp.csv

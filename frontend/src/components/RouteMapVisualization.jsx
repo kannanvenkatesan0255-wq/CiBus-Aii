@@ -13,7 +13,7 @@ import MapboxRouteMap from './MapboxRouteMap';
  * - Academic heuristic disclaimer banner.
  */
 export default function RouteMapVisualization({ route = [], source = null }) {
-  const hasMapboxToken = Boolean(import.meta.env.VITE_MAPBOX_ACCESS_TOKEN);
+  const hasMapboxToken = Boolean(import.meta.env.VITE_MAPBOX_TOKEN || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN);
   const [viewMode, setViewMode] = useState(hasMapboxToken ? 'mapbox' : 'svg');
   const [activeStopIdx, setActiveStopIdx] = useState(null);
 

@@ -28,6 +28,10 @@ ACTIVITY_FILE = DATA_DIR / "activity_history.json"
 EVALUATION_FILE = PROJECT_ROOT / "ai-engine" / "evaluation" / "final_results.json"
 
 
+# Module-level in-memory cache for cloud environments with ephemeral or non-writable filesystems
+_IN_MEMORY_HISTORY: Optional[List[Dict[str, Any]]] = None
+
+
 class AnalyticsService:
     """
     Manages operational activity logs, computes dashboard summaries,
@@ -36,33 +40,49 @@ class AnalyticsService:
 
     @classmethod
     def _ensure_storage_exists(cls) -> None:
-        """Ensures the data directory and activity history JSON file exist."""
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        if not ACTIVITY_FILE.exists():
-            with open(ACTIVITY_FILE, "w", encoding="utf-8") as f:
-                json.dump([], f, indent=2)
+        """Ensures the data directory and activity history JSON file exist, with graceful fallback."""
+        try:
+            DATA_DIR.mkdir(parents=True, exist_ok=True)
+            if not ACTIVITY_FILE.exists():
+                with open(ACTIVITY_FILE, "w", encoding="utf-8") as f:
+                    json.dump([], f, indent=2)
+        except OSError:
+            pass  # Non-blocking on read-only/ephemeral storage
 
     @classmethod
     def load_activity_history(cls) -> List[Dict[str, Any]]:
         """
-        Loads all recorded activity entries from the local storage file.
+        Loads all recorded activity entries from local storage or in-memory fallback.
         """
+        global _IN_MEMORY_HISTORY
         cls._ensure_storage_exists()
         try:
-            with open(ACTIVITY_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data if isinstance(data, list) else []
+            if ACTIVITY_FILE.exists():
+                with open(ACTIVITY_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        _IN_MEMORY_HISTORY = data
+                        return list(data)
         except Exception:
-            return []
+            pass
+
+        if _IN_MEMORY_HISTORY is None:
+            _IN_MEMORY_HISTORY = []
+        return list(_IN_MEMORY_HISTORY)
 
     @classmethod
     def clear_activity_history(cls) -> None:
         """
-        Clears all recorded activity history entries from local storage.
+        Clears all recorded activity history entries from local storage or in-memory state.
         """
+        global _IN_MEMORY_HISTORY
+        _IN_MEMORY_HISTORY = []
         cls._ensure_storage_exists()
-        with open(ACTIVITY_FILE, "w", encoding="utf-8") as f:
-            json.dump([], f, indent=2)
+        try:
+            with open(ACTIVITY_FILE, "w", encoding="utf-8") as f:
+                json.dump([], f, indent=2)
+        except OSError:
+            pass
 
     @classmethod
     def save_activity_record(cls, record_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -106,9 +126,15 @@ class AnalyticsService:
         }
 
         history.append(new_record)
+        global _IN_MEMORY_HISTORY
+        _IN_MEMORY_HISTORY = list(history)
 
-        with open(ACTIVITY_FILE, "w", encoding="utf-8") as f:
-            json.dump(history, f, indent=2)
+        try:
+            cls._ensure_storage_exists()
+            with open(ACTIVITY_FILE, "w", encoding="utf-8") as f:
+                json.dump(history, f, indent=2)
+        except OSError:
+            pass  # Retain in-memory on read-only/ephemeral storage
 
         return new_record
 
@@ -124,9 +150,9 @@ class AnalyticsService:
                     metrics = eval_data.get("metrics", {})
                     return {
                         "model_name": eval_data.get("model_name", "RandomForestRegressor (Tuned)"),
-                        "mae": round(float(metrics.get("mae", 22.0503)), 4),
-                        "rmse": round(float(metrics.get("rmse", 35.0032)), 4),
-                        "r2": round(float(metrics.get("r2", 0.9758)), 4),
+                        "mae": round(float(metrics.get("mae", 27.2008)), 4),
+                        "rmse": round(float(metrics.get("rmse", 45.3658)), 4),
+                        "r2": round(float(metrics.get("r2", 0.9646)), 4),
                         "evaluation_dataset": "Held-out unseen test set (N=1,600 records)",
                         "note": "R² represents the proportion of explained variance and is not a classification accuracy percentage."
                     }
@@ -135,10 +161,10 @@ class AnalyticsService:
 
         # Factual fallback corresponding to evaluated final results
         return {
-            "model_name": "RandomForestRegressor (Tuned, depth=18, n=100)",
-            "mae": 22.0503,
-            "rmse": 35.0032,
-            "r2": 0.9758,
+            "model_name": "RandomForestRegressor (Tuned, max_depth=18, n_estimators=100)",
+            "mae": 27.2008,
+            "rmse": 45.3658,
+            "r2": 0.9646,
             "evaluation_dataset": "Held-out unseen test set (N=1,600 records)",
             "note": "R² represents the proportion of explained variance and is not a classification accuracy percentage."
         }

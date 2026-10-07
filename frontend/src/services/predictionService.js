@@ -7,7 +7,8 @@
  * Strictly omits 'Meals_Sold' to enforce zero data leakage.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const rawApiBase = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL = rawApiBase ? String(rawApiBase).trim().replace(/\/+$/, '') : '';
 
 /**
  * Predicts surplus meals for a scheduled dining or catering service.

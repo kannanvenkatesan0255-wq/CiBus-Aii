@@ -23,8 +23,8 @@ export default function MapboxRouteMap({ route = [], source = null }) {
   const [mapError, setMapError] = useState(null);
   const [activeStyle, setActiveStyle] = useState('mapbox://styles/mapbox/dark-v11');
 
-  // Token is read strictly from client environment; NEVER hardcoded
-  const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
+  // Token is read strictly from client environment (VITE_MAPBOX_TOKEN); NEVER hardcoded
+  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '';
 
   // Filter valid route coordinates
   const validStops = (route || []).filter(stop => {
@@ -35,7 +35,7 @@ export default function MapboxRouteMap({ route = [], source = null }) {
 
   useEffect(() => {
     if (!mapboxToken) {
-      setMapError('Mapbox access token is missing. Please configure VITE_MAPBOX_ACCESS_TOKEN in frontend/.env.local.');
+      setMapError('Mapbox access token is missing. Please configure VITE_MAPBOX_TOKEN in your environment variables.');
       return;
     }
 
@@ -295,7 +295,7 @@ export default function MapboxRouteMap({ route = [], source = null }) {
         <h4 style={{ color: '#ef4444', margin: '0 0 0.5rem 0' }}>Mapbox Service Notice</h4>
         <p style={{ margin: 0, fontSize: '0.88rem' }}>{mapError}</p>
         <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          Tip: Ensure a valid Mapbox public token is set in <code>frontend/.env.local</code>.
+          Tip: Ensure a valid Mapbox public token is set in the <code>VITE_MAPBOX_TOKEN</code> environment variable.
         </p>
       </div>
     );

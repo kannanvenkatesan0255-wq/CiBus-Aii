@@ -32,6 +32,7 @@ from preprocessing.preprocess import FEATURE_COLUMNS
 MODELS_DIR = os.path.join(AI_ENGINE_DIR, "models")
 MODEL_PATH = os.path.join(MODELS_DIR, "food_surplus_model.pkl")
 PREPROCESSOR_PATH = os.path.join(MODELS_DIR, "food_surplus_preprocessor.pkl")
+LABEL_ENCODERS_PATH = os.path.join(MODELS_DIR, "label_encoders.pkl")
 BACKUP_PREPROCESSOR_PATH = os.path.join(MODELS_DIR, "preprocessor.joblib")
 
 # Global caches for loaded model and preprocessor (avoids re-reading disk on repeated calls)
@@ -54,9 +55,16 @@ def load_inference_artifacts() -> Tuple[Any, Any]:
         _CACHED_MODEL = joblib.load(MODEL_PATH)
 
     if _CACHED_PREPROCESSOR is None:
-        prep_path = PREPROCESSOR_PATH if os.path.exists(PREPROCESSOR_PATH) else BACKUP_PREPROCESSOR_PATH
-        if not os.path.exists(prep_path):
-            raise FileNotFoundError(f"Preprocessor artifact not found at: {prep_path}")
+        if os.path.exists(PREPROCESSOR_PATH):
+            prep_path = PREPROCESSOR_PATH
+        elif os.path.exists(LABEL_ENCODERS_PATH):
+            prep_path = LABEL_ENCODERS_PATH
+        elif os.path.exists(BACKUP_PREPROCESSOR_PATH):
+            prep_path = BACKUP_PREPROCESSOR_PATH
+        else:
+            raise FileNotFoundError(
+                f"Preprocessor artifact not found at: {PREPROCESSOR_PATH} or {LABEL_ENCODERS_PATH}"
+            )
         _CACHED_PREPROCESSOR = joblib.load(prep_path)
 
     return _CACHED_MODEL, _CACHED_PREPROCESSOR
