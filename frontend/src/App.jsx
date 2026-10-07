@@ -18,7 +18,7 @@ export default function App() {
   const [prediction, setPrediction] = useState(null);
   const [matchedNGOs, setMatchedNGOs] = useState([]);
   const [routeResult, setRouteResult] = useState(null);
-  const [dashboardKey, setDashboardKey] = useState(0);
+  const [loggedActivity, setLoggedActivity] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,8 +53,7 @@ export default function App() {
 
   const handleActivityLogged = (recordedRoute) => {
     setWorkflowStatus('RECORDED');
-    // Increment key to trigger fresh data load in dashboard
-    setDashboardKey(prev => prev + 1);
+    setLoggedActivity(recordedRoute);
   };
 
   const handleReset = () => {
@@ -80,7 +79,7 @@ export default function App() {
         />
 
         {/* Operational Impact Dashboard */}
-        <ImpactDashboard key={dashboardKey} />
+        <ImpactDashboard loggedActivity={loggedActivity} />
 
         {/* Prediction Engine Stage */}
         <div className="prediction-grid" id="prediction-section">

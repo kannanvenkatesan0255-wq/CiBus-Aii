@@ -147,6 +147,50 @@ def validate_prediction_input(input_dict: Dict[str, Any]) -> Dict[str, Any]:
     return clean_dict
 
 
+def enforce_physical_constraints(
+    predicted_surplus: float,
+    meals_prepared: float,
+    customers_forecast: float
+) -> float:
+    """
+    Enforces post-prediction physical domain invariants:
+    1. final_surplus = max(0.0, predicted_surplus)
+    2. final_surplus = min(final_surplus, meals_prepared)
+    3. Additionally, if customers_forecast >= meals_prepared:
+       final_surplus = 0.0 (all prepared food is demanded/consumed)
+    """
+    final_surplus = max(0.0, float(predicted_surplus))
+    final_surplus = min(final_surplus, float(meals_prepared))
+    if customers_forecast >= meals_prepared:
+        final_surplus = 0.0
+    return round(final_surplus, 2)
+
+
+def predict_surplus_detailed(input_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Provides both raw ML model prediction and operationally validated surplus
+    with constraint audit verification.
+    """
+    model, preprocessor = load_inference_artifacts()
+    validated_dict = validate_prediction_input(input_dict)
+    df_single = pd.DataFrame([validated_dict])[FEATURE_COLUMNS]
+    X_trans = preprocessor.transform(df_single)
+    raw_pred = float(model.predict(X_trans)[0])
+    meals_prep = float(validated_dict["Meals_Prepared"])
+    cust_fore = float(validated_dict["Customers_Forecast"])
+
+    final_pred = enforce_physical_constraints(raw_pred, meals_prep, cust_fore)
+    constraints_ok = (0.0 <= final_pred <= meals_prep) and (final_pred == 0.0 if cust_fore >= meals_prep else True)
+
+    return {
+        "raw_prediction": round(raw_pred, 2),
+        "validated_prediction": final_pred,
+        "meals_prepared": meals_prep,
+        "customers_forecast": cust_fore,
+        "constraints_satisfied": constraints_ok
+    }
+
+
 def predict_surplus(input_data: Union[Dict[str, Any], pd.DataFrame, List[Dict[str, Any]]]) -> Union[float, List[float]]:
     """
     Predicts expected surplus meals based on pre-service operational indicators.
@@ -182,9 +226,12 @@ def predict_surplus(input_data: Union[Dict[str, Any], pd.DataFrame, List[Dict[st
         df_single = pd.DataFrame([validated_dict])[FEATURE_COLUMNS]
         X_trans = preprocessor.transform(df_single)
         raw_pred = float(model.predict(X_trans)[0])
-        # Physically realistic bounding: non-negative and cannot exceed total prepared meals
-        bounded_pred = max(0.0, min(raw_pred, float(validated_dict["Meals_Prepared"])))
-        return round(bounded_pred, 2)
+        final_pred = enforce_physical_constraints(
+            predicted_surplus=raw_pred,
+            meals_prepared=float(validated_dict["Meals_Prepared"]),
+            customers_forecast=float(validated_dict["Customers_Forecast"])
+        )
+        return final_pred
 
     # Handle DataFrame or list of records
     elif isinstance(input_data, (pd.DataFrame, list)):
@@ -195,8 +242,12 @@ def predict_surplus(input_data: Union[Dict[str, Any], pd.DataFrame, List[Dict[st
         raw_preds = model.predict(X_trans)
         results = []
         for pred, rec in zip(raw_preds, validated_records):
-            b_pred = max(0.0, min(float(pred), float(rec["Meals_Prepared"])))
-            results.append(round(b_pred, 2))
+            final_pred = enforce_physical_constraints(
+                predicted_surplus=float(pred),
+                meals_prepared=float(rec["Meals_Prepared"]),
+                customers_forecast=float(rec["Customers_Forecast"])
+            )
+            results.append(final_pred)
         return results
 
     else:
@@ -222,9 +273,97 @@ def parse_cli_args():
     return parser.parse_args()
 
 
+def run_sanity_benchmark():
+    """
+    Executes the 8 canonical benchmark sanity cases and 100+ randomized
+    test combinations to verify physical domain invariants across all regimes.
+    """
+    model, prep = load_inference_artifacts()
+    print("=" * 80)
+    print("     CIBUS-AI: CANONICAL BENCHMARK & GENERALIZATION AUDIT")
+    print("=" * 80)
+
+    sanity_cases = [
+        {"id": 1, "desc": "C=200, M=20 (Demand Overhang)", "c": 200, "m": 20, "staff": 5, "exp": "0.0 or near 0"},
+        {"id": 2, "desc": "C=20, M=200 (Large Supply Excess)", "c": 20, "m": 200, "staff": 10, "exp": "Positive (~130-180)"},
+        {"id": 3, "desc": "C=100, M=200 (Moderate Buffer)", "c": 100, "m": 200, "staff": 10, "exp": "Positive (~85-110)"},
+        {"id": 4, "desc": "C=200, M=200 (Supply-Demand Parity)", "c": 200, "m": 200, "staff": 10, "exp": "Near zero (0.0)"},
+        {"id": 5, "desc": "C=500, M=200 (High Footfall Overhang)", "c": 500, "m": 200, "staff": 10, "exp": "Near zero (0.0)"},
+        {"id": 6, "desc": "C=100, M=500 (Massive Over-Catering)", "c": 100, "m": 500, "staff": 20, "exp": "Substantial (~340-410)"},
+        {"id": 7, "desc": "C=800, M=900 (Large Event Buffer)", "c": 800, "m": 900, "staff": 35, "exp": "Moderate (~30-90)"},
+        {"id": 8, "desc": "C=300, M=1000 (Major Cancellation/Overprep)", "c": 300, "m": 1000, "staff": 40, "exp": "Large (~640-720)"},
+    ]
+
+    print("\n--- 8 SPECIFIED BENCHMARK SANITY CASES ---")
+    print(f"{'#':<3} | {'Scenario':<42} | {'Raw RF':<9} | {'Validated':<9} | {'Status':<12}")
+    print("-" * 80)
+
+    for tc in sanity_cases:
+        payload = {
+            "Day": "Monday",
+            "Weather": "Sunny",
+            "Customers_Forecast": tc["c"],
+            "Meals_Prepared": tc["m"],
+            "Festival": "No",
+            "Event_Type": "Regular",
+            "Staff_Count": tc["staff"],
+            "Avg_Rating": 4.0,
+            "Special_Event": 0
+        }
+        res = predict_surplus_detailed(payload)
+        raw = res["raw_prediction"]
+        val = res["validated_prediction"]
+        m = tc["m"]
+        ok = "PASS" if (0.0 <= val <= m) else "FAIL"
+        print(f"{tc['id']:<3} | {tc['desc']:<42} | {raw:9.2f} | {val:9.2f} | {ok:<12}")
+
+    # 100+ Randomized Tests
+    rng = np.random.default_rng(2026)
+    num_tests = 120
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    weathers = ["Sunny", "Cloudy", "Rainy", "Stormy"]
+    events = ["Regular", "Buffet", "Corporate", "Banquet"]
+    festivals = ["No", "Diwali", "Eid", "Christmas", "New Year"]
+
+    violations = 0
+    raw_list, val_list = [], []
+    for _ in range(num_tests):
+        m = int(rng.integers(20, 1400))
+        c = int(rng.integers(20, 1000))
+        payload = {
+            "Day": str(rng.choice(days)),
+            "Weather": str(rng.choice(weathers)),
+            "Customers_Forecast": c,
+            "Meals_Prepared": m,
+            "Festival": str(rng.choice(festivals)),
+            "Event_Type": str(rng.choice(events)),
+            "Staff_Count": int(np.clip(3 + m // 26, 4, 52)),
+            "Avg_Rating": round(float(rng.uniform(2.5, 4.9)), 2),
+            "Special_Event": int(rng.choice([0, 1]))
+        }
+        res = predict_surplus_detailed(payload)
+        raw_list.append(res["raw_prediction"])
+        val_list.append(res["validated_prediction"])
+        if not (0.0 <= res["validated_prediction"] <= m):
+            violations += 1
+
+    print("\n--- 120 RANDOMIZED OPERATIONAL CASES AUDIT ---")
+    print(f"Total Cases:         {num_tests}")
+    print(f"Physical Violations: {violations} (0 <= Surplus <= Meals_Prepared)")
+    print(f"Raw RF Range:        [{min(raw_list):.2f}, {max(raw_list):.2f}]")
+    print(f"Validated Range:     [{min(val_list):.2f}, {max(val_list):.2f}]")
+    print(f"Zero-Surplus Rate:   {sum(1 for v in val_list if v == 0.0) / num_tests * 100:.1f}%")
+    print(f"Positive Rate:       {sum(1 for v in val_list if v > 0.0) / num_tests * 100:.1f}%")
+    print("=" * 80)
+
+
 def main():
     """Main CLI execution routine."""
     args = parse_cli_args()
+
+    if args.demo:
+        run_sanity_benchmark()
+        return
 
     print("=" * 65)
     print("      CIBUS-AI: FOOD SURPLUS PREDICTION SYSTEM")

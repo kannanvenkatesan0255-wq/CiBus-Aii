@@ -56,6 +56,15 @@ class AnalyticsService:
             return []
 
     @classmethod
+    def clear_activity_history(cls) -> None:
+        """
+        Clears all recorded activity history entries from local storage.
+        """
+        cls._ensure_storage_exists()
+        with open(ACTIVITY_FILE, "w", encoding="utf-8") as f:
+            json.dump([], f, indent=2)
+
+    @classmethod
     def save_activity_record(cls, record_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Validates, timestamps, and persists a completed redistribution workflow activity.
@@ -115,21 +124,21 @@ class AnalyticsService:
                     metrics = eval_data.get("metrics", {})
                     return {
                         "model_name": eval_data.get("model_name", "RandomForestRegressor (Tuned)"),
-                        "mae": round(float(metrics.get("mae", 14.58)), 4),
-                        "rmse": round(float(metrics.get("rmse", 20.69)), 4),
-                        "r2": round(float(metrics.get("r2", 0.9543)), 4),
+                        "mae": round(float(metrics.get("mae", 22.0503)), 4),
+                        "rmse": round(float(metrics.get("rmse", 35.0032)), 4),
+                        "r2": round(float(metrics.get("r2", 0.9758)), 4),
                         "evaluation_dataset": "Held-out unseen test set (N=1,600 records)",
                         "note": "R² represents the proportion of explained variance and is not a classification accuracy percentage."
                     }
             except Exception:
                 pass
 
-        # Factual fallback corresponding to Prompt 7 final results
+        # Factual fallback corresponding to evaluated final results
         return {
-            "model_name": "RandomForestRegressor (Tuned, depth=15, n=200)",
-            "mae": 14.5793,
-            "rmse": 20.6869,
-            "r2": 0.9543,
+            "model_name": "RandomForestRegressor (Tuned, depth=18, n=100)",
+            "mae": 22.0503,
+            "rmse": 35.0032,
+            "r2": 0.9758,
             "evaluation_dataset": "Held-out unseen test set (N=1,600 records)",
             "note": "R² represents the proportion of explained variance and is not a classification accuracy percentage."
         }

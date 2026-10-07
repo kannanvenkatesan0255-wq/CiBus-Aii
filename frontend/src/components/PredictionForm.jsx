@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 
 const INITIAL_STATE = {
-  Day: 'Friday',
-  Weather: 'Rainy',
-  Customers_Forecast: '450',
-  Meals_Prepared: '600',
-  Festival: 'Diwali',
-  Event_Type: 'Buffet',
-  Staff_Count: '25',
-  Avg_Rating: '4.5',
-  Special_Event: '1'
+  Day: '',
+  Weather: '',
+  Customers_Forecast: '',
+  Meals_Prepared: '',
+  Festival: '',
+  Event_Type: '',
+  Staff_Count: '',
+  Avg_Rating: '',
+  Special_Event: ''
 };
 
 export default function PredictionForm({ onSubmit, isLoading, onReset }) {
@@ -23,27 +23,59 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
   };
 
   const handleResetClick = () => {
-    setFormData({
-      Day: 'Monday',
-      Weather: 'Sunny',
-      Customers_Forecast: '',
-      Meals_Prepared: '',
-      Festival: 'No',
-      Event_Type: 'Regular',
-      Staff_Count: '',
-      Avg_Rating: '',
-      Special_Event: '0'
-    });
+    setFormData(INITIAL_STATE);
     setClientError('');
-    if (onReset) onReset();
+    if (onReset) {
+      onReset();
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Client-side validation checks
-    if (!formData.Customers_Forecast || !formData.Meals_Prepared || !formData.Staff_Count || !formData.Avg_Rating) {
-      setClientError('Please fill in all required operational fields.');
+    // Check that user has explicitly provided all manual values
+    if (!formData.Day) {
+      setClientError('Please select a Day of the week.');
+      return;
+    }
+
+    if (!formData.Weather) {
+      setClientError('Please select a Weather condition.');
+      return;
+    }
+
+    if (formData.Customers_Forecast === '' || formData.Customers_Forecast === null) {
+      setClientError('Please enter Customers Forecast.');
+      return;
+    }
+
+    if (formData.Meals_Prepared === '' || formData.Meals_Prepared === null) {
+      setClientError('Please enter Meals Prepared count.');
+      return;
+    }
+
+    if (!formData.Event_Type) {
+      setClientError('Please select an Event Type.');
+      return;
+    }
+
+    if (!formData.Festival) {
+      setClientError('Please select a Festival/Holiday option (select "No Holiday" if regular).');
+      return;
+    }
+
+    if (formData.Staff_Count === '' || formData.Staff_Count === null) {
+      setClientError('Please enter Staff Count.');
+      return;
+    }
+
+    if (formData.Avg_Rating === '' || formData.Avg_Rating === null) {
+      setClientError('Please enter Average Rating (between 1.0 and 5.0).');
+      return;
+    }
+
+    if (formData.Special_Event === '' || formData.Special_Event === null) {
+      setClientError('Please select Special Event indicator (0 or 1).');
       return;
     }
 
@@ -52,22 +84,22 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
     const staff = Number(formData.Staff_Count);
     const rating = Number(formData.Avg_Rating);
 
-    if (customers < 0) {
-      setClientError('Customers Forecast must be a non-negative number.');
+    if (isNaN(customers) || customers < 0) {
+      setClientError('Customers Forecast must be a non-negative number (0 or higher).');
       return;
     }
 
-    if (meals < 0) {
-      setClientError('Meals Prepared must be a non-negative number.');
+    if (isNaN(meals) || meals < 0) {
+      setClientError('Meals Prepared must be a non-negative number (0 or higher).');
       return;
     }
 
-    if (staff < 1) {
+    if (isNaN(staff) || staff < 1) {
       setClientError('Staff Count must be at least 1.');
       return;
     }
 
-    if (rating < 1.0 || rating > 5.0) {
+    if (isNaN(rating) || rating < 1.0 || rating > 5.0) {
       setClientError('Average Rating must be between 1.0 and 5.0.');
       return;
     }
@@ -77,13 +109,26 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
 
   return (
     <div className="glass-card">
-      <div className="card-header">
-        <h2 className="card-title">
-          <span>📋</span> Operational Input Parameters
-        </h2>
-        <p className="card-subtitle">
-          Input pre-service operational metrics known prior to food preparation
-        </p>
+      <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div>
+          <h2 className="card-title">
+            <span>📋</span> Operational Input Parameters
+          </h2>
+          <p className="card-subtitle">
+            Enter pre-service operational metrics manually to calculate surplus forecast
+          </p>
+        </div>
+        <button
+          id="btn-reset-top"
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleResetClick}
+          disabled={isLoading}
+          style={{ fontSize: '0.85rem', padding: '0.45rem 1rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+          title="Reset all values to initial blank state"
+        >
+          <span>🔄</span> Reset Values
+        </button>
       </div>
 
       {clientError && (
@@ -106,7 +151,9 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               value={formData.Day}
               onChange={handleChange}
               disabled={isLoading}
+              required
             >
+              <option value="">-- Select Day (None) --</option>
               <option value="Monday">Monday</option>
               <option value="Tuesday">Tuesday</option>
               <option value="Wednesday">Wednesday</option>
@@ -129,7 +176,9 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               value={formData.Weather}
               onChange={handleChange}
               disabled={isLoading}
+              required
             >
+              <option value="">-- Select Weather (None) --</option>
               <option value="Sunny">Sunny</option>
               <option value="Cloudy">Cloudy</option>
               <option value="Rainy">Rainy</option>
@@ -147,7 +196,7 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               type="number"
               name="Customers_Forecast"
               className="form-control"
-              placeholder="e.g. 450"
+              placeholder="e.g. 0"
               min="0"
               value={formData.Customers_Forecast}
               onChange={handleChange}
@@ -166,7 +215,7 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               type="number"
               name="Meals_Prepared"
               className="form-control"
-              placeholder="e.g. 600"
+              placeholder="e.g. 0"
               min="0"
               value={formData.Meals_Prepared}
               onChange={handleChange}
@@ -187,7 +236,9 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               value={formData.Event_Type}
               onChange={handleChange}
               disabled={isLoading}
+              required
             >
+              <option value="">-- Select Event Type (None) --</option>
               <option value="Regular">Regular Dining</option>
               <option value="Buffet">Buffet Service</option>
               <option value="Corporate">Corporate Gathering</option>
@@ -207,8 +258,10 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               value={formData.Festival}
               onChange={handleChange}
               disabled={isLoading}
+              required
             >
-              <option value="No">No Holiday</option>
+              <option value="">-- Select Festival / Holiday (None) --</option>
+              <option value="No">No Holiday (None)</option>
               <option value="Diwali">Diwali</option>
               <option value="Eid">Eid</option>
               <option value="Christmas">Christmas</option>
@@ -226,7 +279,7 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               type="number"
               name="Staff_Count"
               className="form-control"
-              placeholder="e.g. 25"
+              placeholder="e.g. 1"
               min="1"
               value={formData.Staff_Count}
               onChange={handleChange}
@@ -246,7 +299,7 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               step="0.1"
               name="Avg_Rating"
               className="form-control"
-              placeholder="e.g. 4.5"
+              placeholder="e.g. 4.0"
               min="1.0"
               max="5.0"
               value={formData.Avg_Rating}
@@ -268,9 +321,11 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               value={formData.Special_Event}
               onChange={handleChange}
               disabled={isLoading}
+              required
             >
-              <option value="0">Standard Shift (0)</option>
-              <option value="1">Special Event / VIP Booking (1)</option>
+              <option value="">-- Select Special Event (None) --</option>
+              <option value="0">0 - Standard Shift (No Special Event)</option>
+              <option value="1">1 - Special Event / VIP Booking</option>
             </select>
           </div>
 
@@ -300,7 +355,7 @@ export default function PredictionForm({ onSubmit, isLoading, onReset }) {
               onClick={handleResetClick}
               disabled={isLoading}
             >
-              Reset Form
+              Reset Values
             </button>
           </div>
         </div>

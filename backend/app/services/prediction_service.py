@@ -87,7 +87,7 @@ class PredictionService:
 
         return {
             "predicted_surplus_meals": predicted_meals,
-            "model_name": "RandomForestRegressor (Tuned, max_depth=15, n_estimators=200)",
+            "model_name": "RandomForestRegressor (Tuned, max_depth=18, n_estimators=100)",
             "status": "success",
             "input_summary": {
                 "day": input_data.get("Day"),

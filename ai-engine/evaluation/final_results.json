@@ -10,39 +10,39 @@
         "random_state": 42
     },
     "hyperparameters": {
-        "n_estimators": 200,
-        "max_depth": 15,
-        "min_samples_split": 4,
+        "n_estimators": 100,
+        "max_depth": 18,
+        "min_samples_split": 2,
         "min_samples_leaf": 1,
         "max_features": 0.8,
         "random_state": 42
     },
     "metrics": {
-        "mae": 14.5793,
-        "rmse": 20.6869,
-        "r2": 0.9543
+        "mae": 22.0503,
+        "rmse": 35.0032,
+        "r2": 0.9758
     },
     "descriptive_statistics": {
         "actual_surplus": {
-            "min": 1.0,
-            "max": 643.7,
-            "mean": 116.14,
-            "std": 96.72
+            "min": 0.0,
+            "max": 1246.0,
+            "mean": 150.45,
+            "std": 225.01
         },
         "predicted_surplus": {
-            "min": 11.93,
-            "max": 632.7,
-            "mean": 116.41,
-            "std": 93.97
+            "min": 0.0,
+            "max": 1206.3,
+            "mean": 149.67,
+            "std": 218.37
         },
         "residuals": {
-            "mean": -0.2729,
-            "std": 20.6851
+            "mean": 0.7832,
+            "std": 34.9944
         },
         "tolerance_intervals": {
-            "pct_within_10_meals": 49.38,
-            "pct_within_15_meals": 65.38,
-            "pct_within_25_meals": 82.81
+            "pct_within_10_meals": 46.44,
+            "pct_within_15_meals": 56.19,
+            "pct_within_25_meals": 68.62
         }
     }
 }

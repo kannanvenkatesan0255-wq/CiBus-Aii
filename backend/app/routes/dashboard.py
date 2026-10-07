@@ -101,3 +101,24 @@ async def record_activity(activity: ActivityRecordCreate) -> ActivityRecord:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to record activity: {str(exc)}"
         )
+
+
+@router.post(
+    "/clear",
+    status_code=status.HTTP_200_OK,
+    summary="Clear Recent Activity Log",
+    description="Clears all activity history records for demo session reset."
+)
+async def clear_activities():
+    """
+    Clears all saved activity history records.
+    """
+    try:
+        AnalyticsService.clear_activity_history()
+        return {"status": "success", "message": "Activity history cleared successfully."}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear activities: {str(exc)}"
+        )
+

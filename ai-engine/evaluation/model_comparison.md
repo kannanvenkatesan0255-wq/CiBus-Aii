@@ -17,13 +17,13 @@ In accordance with Machine Learning PBL iterative development practices, the mod
 
 | Hyperparameter | Iteration 1 (Baseline) | Iteration 2 (Refined Final Model) |
 | :--- | :--- | :--- |
-| `n_estimators` | `100` | `200` |
-| `max_depth` | `None` (unbounded) | `15` |
-| `min_samples_split` | `2` | `4` |
+| `n_estimators` | `100` | `100` |
+| `max_depth` | `None` (unbounded) | `18` |
+| `min_samples_split` | `2` | `2` |
 | `min_samples_leaf` | `1` | `1` |
 | `max_features` | `1.0` (all features) | `0.8` |
 | **Selection Method** | Default parameters | 3-Fold Cross-Validation on $X_{\text{train}}$ |
-| **CV Validation Score** | N/A | **RMSE = 20.9391 meals** |
+| **CV Validation Score** | N/A | **RMSE = 37.1354 meals** |
 
 ---
 
@@ -31,9 +31,9 @@ In accordance with Machine Learning PBL iterative development practices, the mod
 
 | Performance Metric | Baseline Model | Refined Final Model | Absolute Difference ($\Delta$) | Result Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **Mean Absolute Error (MAE)** | `14.2939` meals | **`14.5793` meals** | `+0.2854` meals | Comparable / Minor Change |
-| **Root Mean Squared Error (RMSE)** | `20.5429` meals | **`20.6869` meals** | `+0.1440` meals | Comparable / Minor Change |
-| **Coefficient of Determination ($R^2$)** | `0.9549` | **`0.9543`** | `-0.0006` | Comparable |
+| **Mean Absolute Error (MAE)** | `22.4942` meals | **`22.0503` meals** | `-0.4439` meals | Improved (Lower Error) |
+| **Root Mean Squared Error (RMSE)** | `35.7592` meals | **`35.0032` meals** | `-0.7560` meals | Improved (Lower Error) |
+| **Coefficient of Determination ($R^2$)** | `0.9747` | **`0.9758`** | `+0.0011` | Improved (Higher Explained Variance) |
 
 *(Note: $R^2$ represents the proportion of explained variance. It is strictly distinct from classification accuracy).*
 

@@ -28,6 +28,7 @@ DATASET_PATH = os.path.join(AI_ENGINE_DIR, "dataset", "food_surplus.csv")
 MODELS_DIR = os.path.join(AI_ENGINE_DIR, "models")
 PREPROCESSOR_PATH = os.path.join(MODELS_DIR, "preprocessor.joblib")
 ENCODERS_BACKUP_PATH = os.path.join(MODELS_DIR, "label_encoders.pkl")
+FOOD_SURPLUS_PREPROCESSOR_PATH = os.path.join(MODELS_DIR, "food_surplus_preprocessor.pkl")
 
 # Schema Definitions
 CATEGORICAL_FEATURES: List[str] = ["Day", "Weather", "Festival", "Event_Type"]
@@ -185,6 +186,7 @@ def preprocess_pipeline(
         os.makedirs(MODELS_DIR, exist_ok=True)
         joblib.dump(preprocessor, PREPROCESSOR_PATH)
         joblib.dump(preprocessor, ENCODERS_BACKUP_PATH)
+        joblib.dump(preprocessor, FOOD_SURPLUS_PREPROCESSOR_PATH)
 
     return X_train_proc, X_test_proc, y_train, y_test, preprocessor, feature_names
 

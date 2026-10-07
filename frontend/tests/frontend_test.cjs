@@ -181,11 +181,14 @@ runTest('Verify route timeline visualization and summary metrics in RoutePlannin
   assert.strictEqual(routeCode.includes("distance_matrix"), true);
 });
 
-// Test 13: Verify ImpactDashboard.jsx component renders operational cards and ML panel
-runTest('Verify ImpactDashboard.jsx component exists with operational metrics and ML panel', () => {
+// Test 13: Verify ImpactDashboard.jsx component renders operational cards, random demo activities, and refresh clear
+runTest('Verify ImpactDashboard.jsx component exists with operational metrics, demo activities, and refresh clear', () => {
   const dashCode = fs.readFileSync(path.join(SRC_DIR, 'components', 'ImpactDashboard.jsx'), 'utf8');
   assert.strictEqual(dashCode.includes("CIBUS-AI Impact Dashboard"), true);
   assert.strictEqual(dashCode.includes("total_predicted_surplus_meals"), true);
+  assert.strictEqual(dashCode.includes("generateRandomDemoMetrics"), true);
+  assert.strictEqual(dashCode.includes("generateRandomDemoActivities"), true);
+  assert.strictEqual(dashCode.includes("handleRefreshClick"), true);
   assert.strictEqual(dashCode.includes("ML Model Performance"), true);
   assert.strictEqual(dashCode.includes("MAE"), true);
   assert.strictEqual(dashCode.includes("RMSE"), true);

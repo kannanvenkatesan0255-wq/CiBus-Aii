@@ -320,5 +320,26 @@ export async function recordActivity(activityData) {
   }
 }
 
+/**
+ * Clears logged redistribution activities for demonstration reset.
+ * 
+ * @returns {Promise<Object|null>} Clear status response
+ */
+export async function clearRecentActivities() {
+  const endpoint = `${API_BASE_URL}/api/dashboard/clear`;
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 
 

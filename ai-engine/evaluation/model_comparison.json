@@ -9,33 +9,33 @@
     "baseline_model": {
         "name": "RandomForestRegressor (Default / Baseline)",
         "metrics": {
-            "mae": 14.2939,
-            "rmse": 20.5429,
-            "r2": 0.9549
+            "mae": 22.4942,
+            "rmse": 35.7592,
+            "r2": 0.9747
         }
     },
     "final_model": {
         "name": "RandomForestRegressor (Tuned / Final)",
         "hyperparameters": {
-            "n_estimators": 200,
-            "max_depth": 15,
-            "min_samples_split": 4,
+            "n_estimators": 100,
+            "max_depth": 18,
+            "min_samples_split": 2,
             "min_samples_leaf": 1,
             "max_features": 0.8,
             "random_state": 42
         },
         "metrics": {
-            "mae": 14.5793,
-            "rmse": 20.6869,
-            "r2": 0.9543
+            "mae": 22.0503,
+            "rmse": 35.0032,
+            "r2": 0.9758
         }
     },
     "comparison": {
-        "mae_delta": 0.2854,
-        "rmse_delta": 0.144,
-        "r2_delta": -0.0006,
-        "mae_status": "Comparable (+0.29 meals)",
-        "rmse_status": "Comparable (+0.14 meals)",
-        "r2_status": "Comparable (-0.0006)"
+        "mae_delta": -0.4439,
+        "rmse_delta": -0.756,
+        "r2_delta": 0.0011,
+        "mae_status": "Lower Error",
+        "rmse_status": "Lower Error",
+        "r2_status": "Higher Explained Variance"
     }
 }

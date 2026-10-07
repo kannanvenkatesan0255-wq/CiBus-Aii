@@ -71,10 +71,10 @@ def run_hyperparameter_tuning(
     # 2. Hyperparameter Grid Definition
     param_distributions = {
         "n_estimators": [100, 150, 200],
-        "max_depth": [None, 15, 25],
-        "min_samples_split": [2, 4, 8],
-        "min_samples_leaf": [1, 2, 4],
-        "max_features": ["sqrt", 0.8, 1.0]
+        "max_depth": [18, 22, 25, None],
+        "min_samples_split": [2, 4],
+        "min_samples_leaf": [1, 2],
+        "max_features": [0.7, 0.8, 1.0]
     }
 
     print("\n[2] Setting up 3-Fold Cross-Validation Hyperparameter Search on Training Data...", flush=True)
@@ -83,11 +83,11 @@ def run_hyperparameter_tuning(
     cv_search = RandomizedSearchCV(
         estimator=base_rf,
         param_distributions=param_distributions,
-        n_iter=10,
+        n_iter=12,
         cv=3,
         scoring="neg_root_mean_squared_error",
         random_state=random_state,
-        n_jobs=1,
+        n_jobs=-1,
         refit=True,
         verbose=1
     )
@@ -138,6 +138,8 @@ def run_hyperparameter_tuning(
 
     joblib.dump(best_model, FINAL_MODEL_PATH)
     joblib.dump(preprocessor, FINAL_PREPROCESSOR_PATH)
+    joblib.dump(preprocessor, os.path.join(MODELS_DIR, "label_encoders.pkl"))
+    joblib.dump(preprocessor, os.path.join(MODELS_DIR, "preprocessor.joblib"))
 
     # 6. Save Comparison JSON
     comparison_data = {

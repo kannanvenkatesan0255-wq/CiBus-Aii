@@ -19,9 +19,9 @@
         "feature_count": 25
     },
     "metrics": {
-        "mae": 14.2939,
-        "rmse": 20.5429,
-        "r2": 0.9549
+        "mae": 22.4942,
+        "rmse": 35.7592,
+        "r2": 0.9747
     },
     "target_variable": "Surplus_Meals",
     "random_state": 42
