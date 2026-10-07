@@ -52,8 +52,10 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 frontend_url_env = os.getenv("FRONTEND_URL", "").strip()
 cors_origins_env = os.getenv("CORS_ORIGINS", "").strip()
 
-# Default trusted origins for local development and preview environments
+# Default trusted origins for local development and known production frontend
 allowed_origins_set = {
+    "https://cibus-ai.onrender.com",
+    "https://cibus-ai-frontend.onrender.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",

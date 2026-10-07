@@ -7,8 +7,9 @@
  * Strictly omits 'Meals_Sold' to enforce zero data leakage.
  */
 
-const rawApiBase = import.meta.env.VITE_API_BASE_URL || '';
-const API_BASE_URL = rawApiBase ? String(rawApiBase).trim().replace(/\/+$/, '') : '';
+import { API_BASE_URL } from './apiConfig';
+
+export { API_BASE_URL };
 
 /**
  * Predicts surplus meals for a scheduled dining or catering service.
@@ -68,7 +69,7 @@ export async function predictSurplus(formData) {
     return await response.json();
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error("Unable to connect to the CIBUS-AI prediction backend. Please ensure the FastAPI server is running on port 8000.");
+      throw new Error("Unable to connect to the CIBUS-AI prediction service. Please try again.");
     }
     throw error;
   }
@@ -158,7 +159,7 @@ export async function matchNGOs(matchParams) {
     return await response.json();
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error("Unable to connect to CIBUS-AI NGO Matching API. Please ensure the backend is running.");
+      throw new Error("Unable to connect to the CIBUS-AI NGO matching service. Please try again.");
     }
     throw error;
   }
@@ -212,7 +213,7 @@ export async function optimizeRoute(routeParams) {
     return await response.json();
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error("Unable to connect to CIBUS-AI Route Optimization API. Please ensure the backend is running.");
+      throw new Error("Unable to connect to the CIBUS-AI route optimization service. Please try again.");
     }
     throw error;
   }
@@ -238,7 +239,7 @@ export async function getDashboardSummary() {
     return await response.json();
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error("Unable to connect to CIBUS-AI Dashboard API. Please ensure the backend server is running.");
+      throw new Error("Unable to connect to the CIBUS-AI dashboard service. Please try again.");
     }
     throw error;
   }
@@ -265,7 +266,7 @@ export async function getRecentActivities(limit = 10) {
     return await response.json();
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error("Unable to connect to CIBUS-AI Dashboard API.");
+      throw new Error("Unable to connect to the CIBUS-AI dashboard service. Please try again.");
     }
     throw error;
   }
@@ -315,7 +316,7 @@ export async function recordActivity(activityData) {
     return await response.json();
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error("Unable to log activity to CIBUS-AI Dashboard API.");
+      throw new Error("Unable to connect to the CIBUS-AI activity logging service. Please try again.");
     }
     throw error;
   }
