@@ -18,31 +18,31 @@
         "random_state": 42
     },
     "metrics": {
-        "mae": 22.0503,
-        "rmse": 35.0032,
-        "r2": 0.9758
+        "mae": 27.2008,
+        "rmse": 45.3658,
+        "r2": 0.9646
     },
     "descriptive_statistics": {
         "actual_surplus": {
             "min": 0.0,
-            "max": 1246.0,
-            "mean": 150.45,
-            "std": 225.01
+            "max": 1224.6,
+            "mean": 150.41,
+            "std": 241.06
         },
         "predicted_surplus": {
             "min": 0.0,
-            "max": 1206.3,
-            "mean": 149.67,
-            "std": 218.37
+            "max": 1208.3,
+            "mean": 149.66,
+            "std": 232.66
         },
         "residuals": {
-            "mean": 0.7832,
-            "std": 34.9944
+            "mean": 0.7541,
+            "std": 45.3596
         },
         "tolerance_intervals": {
-            "pct_within_10_meals": 46.44,
-            "pct_within_15_meals": 56.19,
-            "pct_within_25_meals": 68.62
+            "pct_within_10_meals": 43.56,
+            "pct_within_15_meals": 52.0,
+            "pct_within_25_meals": 64.56
         }
     }
 }

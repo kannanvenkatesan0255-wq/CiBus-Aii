@@ -1,26 +1,10 @@
-Rank,Feature,Importance
-1,Meals_Prepared,0.499047
-2,Customers_Forecast,0.281143
-3,Staff_Count,0.177902
-4,Weather_Stormy,0.008141
-5,Avg_Rating,0.005418
-6,Weather_Sunny,0.00511
-7,Event_Type_Buffet,0.004251
-8,Weather_Rainy,0.003017
-9,Event_Type_Corporate,0.002903
-10,Festival_No,0.002204
-11,Weather_Cloudy,0.001403
-12,Special_Event,0.001262
-13,Day_Monday,0.00125
-14,Event_Type_Regular,0.000836
-15,Festival_Diwali,0.000814
-16,Day_Saturday,0.000743
-17,Event_Type_Banquet,0.000693
-18,Day_Friday,0.00068
-19,Day_Wednesday,0.00055
-20,Festival_Eid,0.000544
-21,Day_Sunday,0.000527
-22,Day_Tuesday,0.000499
-23,Day_Thursday,0.000498
-24,Festival_Christmas,0.000301
-25,Festival_New Year,0.000265
+Rank,Feature,Used_by_Model,RF_Importance_MDI,Permutation_Importance,Interpretation
+1,Meals_Prepared,True,0.6087,365.026,Primary supply factor: Total food volume cooked directly caps maximum possible surplus.
+2,Customers_Forecast,True,0.2794,172.9879,Primary demand factor: Baseline diner footfall expectation driving meal consumption.
+3,Staff_Count,True,0.0501,18.453,Operational throughput: Adequate staffing roster maintains table turns and service throughput.
+4,Weather,True,0.0187,14.9373,Environmental shock: Severe rain and storms suppress walk-in customer turnout and elevate surplus.
+5,Event_Type,True,0.0123,10.1895,Dining format: Buffets/banquets increase per-capita intake; corporate events reduce consumption.
+6,Special_Event,True,0.01,9.3787,Occasion demand surge: Themed VIP celebrations increase attendance and reduce surplus.
+7,Avg_Rating,True,0.009,2.6142,Establishment reputation: High ratings increase customer reservation conversion and footfall.
+8,Day,True,0.0074,3.3679,Weekly cyclical pattern: Weekend leisure dining peaks increase consumption; Mondays slow down.
+9,Festival,True,0.0044,1.9014,Cultural holiday surge: Festive celebrations increase dining group sizes and meal demand.

@@ -270,7 +270,131 @@ def parse_cli_args():
     parser.add_argument("--rating", type=float, default=4.3, help="Establishment average rating (1.0 - 5.0)")
     parser.add_argument("--special", type=str, default="0", help="Special event flag (0/1 or Yes/No)")
     parser.add_argument("--demo", action="store_true", help="Run demonstrative sample predictions")
+    parser.add_argument("--sensitivity", action="store_true", help="Run controlled one-at-a-time 9-parameter sensitivity analysis")
+    parser.add_argument("--interactions", action="store_true", help="Run operational interaction scenario analysis")
     return parser.parse_args()
+
+
+def run_controlled_sensitivity_analysis() -> List[Dict[str, Any]]:
+    """
+    Executes controlled one-at-a-time sensitivity analysis changing each of the 9
+    operational parameters individually while holding all other features at the
+    exact prompt baseline.
+    """
+    baseline = {
+        "Day": "Wednesday",
+        "Weather": "Sunny",
+        "Customers_Forecast": 200,
+        "Meals_Prepared": 500,
+        "Festival": "No",
+        "Event_Type": "Regular",
+        "Staff_Count": 10,
+        "Avg_Rating": 4.0,
+        "Special_Event": 0
+    }
+
+    base_res = predict_surplus_detailed(baseline)
+    base_raw = base_res["raw_prediction"]
+
+    experiments = [
+        ("Day", "Wednesday", "Sunday", {"Day": "Sunday"}),
+        ("Weather", "Sunny", "Rainy", {"Weather": "Rainy"}),
+        ("Customers_Forecast", 200, 400, {"Customers_Forecast": 400}),
+        ("Meals_Prepared", 500, 700, {"Meals_Prepared": 700}),
+        ("Festival", "No", "Diwali", {"Festival": "Diwali"}),
+        ("Event_Type", "Regular", "Buffet", {"Event_Type": "Buffet"}),
+        ("Staff_Count", 10, 25, {"Staff_Count": 25}),
+        ("Avg_Rating", 4.0, 4.8, {"Avg_Rating": 4.8}),
+        ("Special_Event", 0, 1, {"Special_Event": 1}),
+    ]
+
+    print("\n" + "=" * 95)
+    print(f"      CIBUS-AI: CONTROLLED ONE-AT-A-TIME SENSITIVITY TEST (BASELINE = {base_raw:.2f} MEALS)")
+    print("=" * 95)
+    print(f"{'Feature Changed':<20} | {'Orig Val':<12} | {'New Val':<12} | {'Orig Pred':<10} | {'New Pred':<10} | {'Difference':<10} | {'Direction'}")
+    print("-" * 95)
+
+    results = []
+    for feat, orig_v, new_v, patch in experiments:
+        tc = dict(baseline)
+        tc.update(patch)
+        res = predict_surplus_detailed(tc)
+        new_raw = res["raw_prediction"]
+        delta = round(new_raw - base_raw, 2)
+        direction = "Demand Surge (Surplus Drops)" if delta < 0 else "Excess Supply (Surplus Rises)"
+        print(f"{feat:<20} | {str(orig_v):<12} | {str(new_v):<12} | {base_raw:<10.2f} | {new_raw:<10.2f} | {delta:+10.2f} | {direction}")
+        results.append({
+            "feature": feat,
+            "original_value": orig_v,
+            "new_value": new_v,
+            "original_prediction": base_raw,
+            "new_prediction": new_raw,
+            "prediction_difference": delta
+        })
+
+    print("=" * 95)
+    return results
+
+
+def run_interaction_scenarios() -> List[Dict[str, Any]]:
+    """
+    Evaluates key parameter interaction combinations specified in Section 7.
+    """
+    tests = [
+        ("High Customers + Low Meals", {"Customers_Forecast": 600, "Meals_Prepared": 100, "Staff_Count": 25}),
+        ("High Customers + High Meals", {"Customers_Forecast": 700, "Meals_Prepared": 850, "Staff_Count": 28}),
+        ("Low Customers + High Meals", {"Customers_Forecast": 50, "Meals_Prepared": 600, "Staff_Count": 10}),
+        ("Festival + High Customers", {"Festival": "Diwali", "Customers_Forecast": 600, "Meals_Prepared": 600, "Staff_Count": 25}),
+        ("Special Event + High Customers", {"Special_Event": 1, "Customers_Forecast": 600, "Meals_Prepared": 600, "Staff_Count": 25}),
+        ("Bad Weather + High Customers", {"Weather": "Stormy", "Customers_Forecast": 600, "Meals_Prepared": 600, "Staff_Count": 25}),
+        ("Banquet + High Meals", {"Event_Type": "Banquet", "Customers_Forecast": 500, "Meals_Prepared": 750, "Staff_Count": 26}),
+        ("Corporate + Moderate Meals", {"Event_Type": "Corporate", "Customers_Forecast": 300, "Meals_Prepared": 400, "Staff_Count": 14})
+    ]
+
+    base = {
+        "Day": "Wednesday",
+        "Weather": "Sunny",
+        "Customers_Forecast": 200,
+        "Meals_Prepared": 500,
+        "Festival": "No",
+        "Event_Type": "Regular",
+        "Staff_Count": 10,
+        "Avg_Rating": 4.0,
+        "Special_Event": 0
+    }
+
+    print("\n" + "=" * 90)
+    print("                 CIBUS-AI: OPERATIONAL INTERACTION SCENARIOS AUDIT")
+    print("=" * 90)
+    print(f"{'Interaction Scenario':<32} | {'Raw RF':<9} | {'Validated':<9} | {'Meals Prep':<10} | {'Behavior'}")
+    print("-" * 90)
+
+    results = []
+    for name, patch in tests:
+        d = dict(base)
+        d.update(patch)
+        res = predict_surplus_detailed(d)
+        raw = res["raw_prediction"]
+        val = res["validated_prediction"]
+        m = d["Meals_Prepared"]
+
+        behavior = "Physically Valid"
+        if val == 0.0:
+            behavior += " (Exhausted / Zero Surplus)"
+        else:
+            behavior += f" ({val/m*100:.1f}% surplus)"
+
+        print(f"{name:<32} | {raw:9.2f} | {val:9.2f} | {m:<10} | {behavior}")
+        results.append({
+            "scenario": name,
+            "raw_prediction": raw,
+            "validated_prediction": val,
+            "meals_prepared": m,
+            "behavior": behavior
+        })
+
+    print("=" * 90)
+    return results
 
 
 def run_sanity_benchmark():
@@ -363,6 +487,14 @@ def main():
 
     if args.demo:
         run_sanity_benchmark()
+        return
+
+    if args.sensitivity:
+        run_controlled_sensitivity_analysis()
+        return
+
+    if args.interactions:
+        run_interaction_scenarios()
         return
 
     print("=" * 65)

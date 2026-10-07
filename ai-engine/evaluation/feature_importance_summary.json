@@ -3,180 +3,207 @@
     "model_file": "food_surplus_model.pkl",
     "target_variable": "Surplus_Meals",
     "total_transformed_features": 25,
-    "total_raw_features": 9,
+    "total_operational_features": 9,
     "total_importance_sum": 1.0,
-    "ranked_transformed_features": [
+    "aggregated_features_table": [
+        {
+            "Rank": 1,
+            "Feature": "Meals_Prepared",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.6087,
+            "Permutation_Importance": 365.026,
+            "Interpretation": "Primary supply factor: Total food volume cooked directly caps maximum possible surplus."
+        },
+        {
+            "Rank": 2,
+            "Feature": "Customers_Forecast",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.2794,
+            "Permutation_Importance": 172.9879,
+            "Interpretation": "Primary demand factor: Baseline diner footfall expectation driving meal consumption."
+        },
+        {
+            "Rank": 3,
+            "Feature": "Staff_Count",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.0501,
+            "Permutation_Importance": 18.453,
+            "Interpretation": "Operational throughput: Adequate staffing roster maintains table turns and service throughput."
+        },
+        {
+            "Rank": 4,
+            "Feature": "Weather",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.0187,
+            "Permutation_Importance": 14.9373,
+            "Interpretation": "Environmental shock: Severe rain and storms suppress walk-in customer turnout and elevate surplus."
+        },
+        {
+            "Rank": 5,
+            "Feature": "Event_Type",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.0123,
+            "Permutation_Importance": 10.1895,
+            "Interpretation": "Dining format: Buffets/banquets increase per-capita intake; corporate events reduce consumption."
+        },
+        {
+            "Rank": 6,
+            "Feature": "Special_Event",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.01,
+            "Permutation_Importance": 9.3787,
+            "Interpretation": "Occasion demand surge: Themed VIP celebrations increase attendance and reduce surplus."
+        },
+        {
+            "Rank": 7,
+            "Feature": "Avg_Rating",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.009,
+            "Permutation_Importance": 2.6142,
+            "Interpretation": "Establishment reputation: High ratings increase customer reservation conversion and footfall."
+        },
+        {
+            "Rank": 8,
+            "Feature": "Day",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.0074,
+            "Permutation_Importance": 3.3679,
+            "Interpretation": "Weekly cyclical pattern: Weekend leisure dining peaks increase consumption; Mondays slow down."
+        },
+        {
+            "Rank": 9,
+            "Feature": "Festival",
+            "Used_by_Model": true,
+            "RF_Importance_MDI": 0.0044,
+            "Permutation_Importance": 1.9014,
+            "Interpretation": "Cultural holiday surge: Festive celebrations increase dining group sizes and meal demand."
+        }
+    ],
+    "transformed_features_table": [
         {
             "Feature": "Meals_Prepared",
-            "Importance": 0.499047,
-            "Rank": 1
+            "MDI_Importance": 0.608679,
+            "Permutation_Importance": 365.026
         },
         {
             "Feature": "Customers_Forecast",
-            "Importance": 0.281143,
-            "Rank": 2
+            "MDI_Importance": 0.279406,
+            "Permutation_Importance": 172.9879
         },
         {
             "Feature": "Staff_Count",
-            "Importance": 0.177902,
-            "Rank": 3
-        },
-        {
-            "Feature": "Weather_Stormy",
-            "Importance": 0.008141,
-            "Rank": 4
-        },
-        {
-            "Feature": "Avg_Rating",
-            "Importance": 0.005418,
-            "Rank": 5
-        },
-        {
-            "Feature": "Weather_Sunny",
-            "Importance": 0.00511,
-            "Rank": 6
-        },
-        {
-            "Feature": "Event_Type_Buffet",
-            "Importance": 0.004251,
-            "Rank": 7
-        },
-        {
-            "Feature": "Weather_Rainy",
-            "Importance": 0.003017,
-            "Rank": 8
-        },
-        {
-            "Feature": "Event_Type_Corporate",
-            "Importance": 0.002903,
-            "Rank": 9
-        },
-        {
-            "Feature": "Festival_No",
-            "Importance": 0.002204,
-            "Rank": 10
-        },
-        {
-            "Feature": "Weather_Cloudy",
-            "Importance": 0.001403,
-            "Rank": 11
+            "MDI_Importance": 0.050101,
+            "Permutation_Importance": 18.453
         },
         {
             "Feature": "Special_Event",
-            "Importance": 0.001262,
-            "Rank": 12
+            "MDI_Importance": 0.009987,
+            "Permutation_Importance": 9.3787
+        },
+        {
+            "Feature": "Avg_Rating",
+            "MDI_Importance": 0.009017,
+            "Permutation_Importance": 2.6142
+        },
+        {
+            "Feature": "Weather_Stormy",
+            "MDI_Importance": 0.008013,
+            "Permutation_Importance": 8.0459
+        },
+        {
+            "Feature": "Weather_Sunny",
+            "MDI_Importance": 0.006417,
+            "Permutation_Importance": 5.3218
+        },
+        {
+            "Feature": "Event_Type_Corporate",
+            "MDI_Importance": 0.006212,
+            "Permutation_Importance": 5.8267
+        },
+        {
+            "Feature": "Event_Type_Buffet",
+            "MDI_Importance": 0.004245,
+            "Permutation_Importance": 3.4623
+        },
+        {
+            "Feature": "Weather_Rainy",
+            "MDI_Importance": 0.002608,
+            "Permutation_Importance": 1.1257
+        },
+        {
+            "Feature": "Festival_No",
+            "MDI_Importance": 0.002448,
+            "Permutation_Importance": 1.7673
         },
         {
             "Feature": "Day_Monday",
-            "Importance": 0.00125,
-            "Rank": 13
+            "MDI_Importance": 0.001814,
+            "Permutation_Importance": 1.8186
+        },
+        {
+            "Feature": "Weather_Cloudy",
+            "MDI_Importance": 0.001636,
+            "Permutation_Importance": 0.4439
         },
         {
             "Feature": "Event_Type_Regular",
-            "Importance": 0.000836,
-            "Rank": 14
-        },
-        {
-            "Feature": "Festival_Diwali",
-            "Importance": 0.000814,
-            "Rank": 15
-        },
-        {
-            "Feature": "Day_Saturday",
-            "Importance": 0.000743,
-            "Rank": 16
-        },
-        {
-            "Feature": "Event_Type_Banquet",
-            "Importance": 0.000693,
-            "Rank": 17
+            "MDI_Importance": 0.001224,
+            "Permutation_Importance": 0.7861
         },
         {
             "Feature": "Day_Friday",
-            "Importance": 0.00068,
-            "Rank": 18
+            "MDI_Importance": 0.001136,
+            "Permutation_Importance": 0.5108
         },
         {
-            "Feature": "Day_Wednesday",
-            "Importance": 0.00055,
-            "Rank": 19
-        },
-        {
-            "Feature": "Festival_Eid",
-            "Importance": 0.000544,
-            "Rank": 20
+            "Feature": "Day_Saturday",
+            "MDI_Importance": 0.001058,
+            "Permutation_Importance": 0.3172
         },
         {
             "Feature": "Day_Sunday",
-            "Importance": 0.000527,
-            "Rank": 21
-        },
-        {
-            "Feature": "Day_Tuesday",
-            "Importance": 0.000499,
-            "Rank": 22
+            "MDI_Importance": 0.000996,
+            "Permutation_Importance": 0.434
         },
         {
             "Feature": "Day_Thursday",
-            "Importance": 0.000498,
-            "Rank": 23
+            "MDI_Importance": 0.000934,
+            "Permutation_Importance": 0.1417
+        },
+        {
+            "Feature": "Day_Wednesday",
+            "MDI_Importance": 0.000769,
+            "Permutation_Importance": 0.0551
+        },
+        {
+            "Feature": "Day_Tuesday",
+            "MDI_Importance": 0.000736,
+            "Permutation_Importance": 0.0905
+        },
+        {
+            "Feature": "Event_Type_Banquet",
+            "MDI_Importance": 0.000629,
+            "Permutation_Importance": 0.1144
+        },
+        {
+            "Feature": "Festival_Diwali",
+            "MDI_Importance": 0.000622,
+            "Permutation_Importance": -0.0442
         },
         {
             "Feature": "Festival_Christmas",
-            "Importance": 0.000301,
-            "Rank": 24
+            "MDI_Importance": 0.000555,
+            "Permutation_Importance": 0.0653
+        },
+        {
+            "Feature": "Festival_Eid",
+            "MDI_Importance": 0.000398,
+            "Permutation_Importance": 0.0836
         },
         {
             "Feature": "Festival_New Year",
-            "Importance": 0.000265,
-            "Rank": 25
-        }
-    ],
-    "ranked_aggregated_features": [
-        {
-            "Original_Feature": "Meals_Prepared",
-            "Aggregated_Importance": 0.499,
-            "Rank": 1
-        },
-        {
-            "Original_Feature": "Customers_Forecast",
-            "Aggregated_Importance": 0.2811,
-            "Rank": 2
-        },
-        {
-            "Original_Feature": "Staff_Count",
-            "Aggregated_Importance": 0.1779,
-            "Rank": 3
-        },
-        {
-            "Original_Feature": "Weather",
-            "Aggregated_Importance": 0.0177,
-            "Rank": 4
-        },
-        {
-            "Original_Feature": "Event_Type",
-            "Aggregated_Importance": 0.0087,
-            "Rank": 5
-        },
-        {
-            "Original_Feature": "Avg_Rating",
-            "Aggregated_Importance": 0.0054,
-            "Rank": 6
-        },
-        {
-            "Original_Feature": "Day",
-            "Aggregated_Importance": 0.0047,
-            "Rank": 7
-        },
-        {
-            "Original_Feature": "Festival",
-            "Aggregated_Importance": 0.0041,
-            "Rank": 8
-        },
-        {
-            "Original_Feature": "Special_Event",
-            "Aggregated_Importance": 0.0013,
-            "Rank": 9
+            "MDI_Importance": 0.00036,
+            "Permutation_Importance": 0.0294
         }
     ]
 }

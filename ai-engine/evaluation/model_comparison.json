@@ -9,9 +9,9 @@
     "baseline_model": {
         "name": "RandomForestRegressor (Default / Baseline)",
         "metrics": {
-            "mae": 22.4942,
-            "rmse": 35.7592,
-            "r2": 0.9747
+            "mae": 27.1476,
+            "rmse": 45.3747,
+            "r2": 0.9646
         }
     },
     "final_model": {
@@ -25,17 +25,17 @@
             "random_state": 42
         },
         "metrics": {
-            "mae": 22.0503,
-            "rmse": 35.0032,
-            "r2": 0.9758
+            "mae": 27.2008,
+            "rmse": 45.3658,
+            "r2": 0.9646
         }
     },
     "comparison": {
-        "mae_delta": -0.4439,
-        "rmse_delta": -0.756,
-        "r2_delta": 0.0011,
-        "mae_status": "Lower Error",
+        "mae_delta": 0.0532,
+        "rmse_delta": -0.0089,
+        "r2_delta": -0.0,
+        "mae_status": "Comparable (+0.29 meals)",
         "rmse_status": "Lower Error",
-        "r2_status": "Higher Explained Variance"
+        "r2_status": "Comparable (-0.0006)"
     }
 }

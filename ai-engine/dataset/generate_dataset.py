@@ -1,5 +1,5 @@
 """
-CIBUS-AI - Realistic Food Surplus Synthetic Dataset Generator
+CIBUS-AI - Realistic Multi-Parameter Food Surplus Synthetic Dataset Generator
 File: ai-engine/dataset/generate_dataset.py
 
 Purpose:
@@ -8,31 +8,28 @@ Adheres strictly to the data-leakage prevention rule by omitting Meals_Sold.
 Models food surplus from a realistic operational food-service demand simulation:
 
 Fundamental Relationship:
-Customers_Forecast
+Customers_Forecast (baseline expectation)
         ↓
-Expected Demand / Consumption
+Operational & Contextual Factors (Weather, Festival, Event_Type, Special_Event, Day, Avg_Rating, Staff_Count)
         ↓
-Meals Prepared
+Realized Diner Demand / Service Throughput
         ↓
-Potential Surplus
+Meals Prepared (Production batch capacity across operational regimes)
         ↓
-Surplus_Meals
+Surplus Meals (Unconsumed portions)
 
 Key Principles:
-1. Operational context: Day, Weather, Event_Type, Festival, Special_Event, Staff_Count, Avg_Rating.
-2. Demand simulation: Realized diner demand modulated by weather disruptions, event per-capita dynamics,
-   festival surges, day-of-week patterns, and establishment reputation.
-3. Supply distribution: Meals_Prepared across diverse operational regimes:
-   - Standard planned buffer (10% to 35% above forecast)
-   - Tight / balanced production (-5% to +8% buffer)
-   - High buffer / lavish service (35% to 75% buffer for buffets & banquets)
-   - Demand surge / under-preparation (Meals < Demand, supply exhausted -> surplus = 0)
-   - Large over-preparation / partial cancellation (Meals = 1.75x to 3.50x forecast)
-   - Decoupled operational states (severe stockout or large contract with low turnout)
-4. Physical Domain Laws:
-   - Consumed meals cannot exceed Meals_Prepared (physical supply ceiling).
-   - Surplus_Meals = max(0, Meals_Prepared - realized_demand)
-   - Every single record satisfies: 0 <= Surplus_Meals <= Meals_Prepared.
+1. Every operational parameter contributes meaningful domain information:
+   - Customers_Forecast & Meals_Prepared: primary demand-supply determinants.
+   - Weather: disruptions (storms/rain) dampen customer footfall and increase surplus.
+   - Event_Type: buffet & banquet increase consumption/courses; corporate reduces portions.
+   - Festival & Special_Event: festive occasions and themed events draw attendance surges.
+   - Day: weekend dining peaks increase consumption; Mondays slow down.
+   - Avg_Rating: reputation drives reservation conversion and walk-in footfall.
+   - Staff_Count: service staffing ratio affects service throughput and table turnover.
+2. Zero data leakage: Meals_Sold is strictly absent.
+3. Physical Domain Laws:
+   - 0 <= Surplus_Meals <= Meals_Prepared for every single row.
    - When realized demand >= Meals_Prepared, Surplus_Meals is strictly 0.0.
 """
 
@@ -43,6 +40,7 @@ import pandas as pd
 # Define paths
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.join(CURRENT_DIR, "food_surplus.csv")
+
 
 def generate_food_surplus_data(num_samples: int = 8000, random_seed: int = 42) -> pd.DataFrame:
     """
@@ -63,12 +61,12 @@ def generate_food_surplus_data(num_samples: int = 8000, random_seed: int = 42) -
 
     # 2. Weather Conditions
     weather_types = ["Sunny", "Cloudy", "Rainy", "Stormy"]
-    weather_probs = [0.46, 0.28, 0.18, 0.08]
+    weather_probs = [0.45, 0.28, 0.19, 0.08]
     weather_col = rng.choice(weather_types, size=num_samples, p=weather_probs)
 
     # 3. Event Type
     event_types = ["Regular", "Buffet", "Corporate", "Banquet"]
-    event_probs = [0.45, 0.27, 0.16, 0.12]
+    event_probs = [0.45, 0.26, 0.17, 0.12]
     event_col = rng.choice(event_types, size=num_samples, p=event_probs)
 
     # 4. Festival Indicator / Occasions
@@ -77,13 +75,9 @@ def generate_food_surplus_data(num_samples: int = 8000, random_seed: int = 42) -
     festival_col = rng.choice(festivals, size=num_samples, p=festival_probs)
 
     # 5. Special Event (Binary 0 or 1)
-    special_event_col = rng.choice([0, 1], size=num_samples, p=[0.82, 0.18])
+    special_event_col = rng.choice([0, 1], size=num_samples, p=[0.80, 0.20])
 
     # 6. Customers Forecast: wide realistic operational footfall range (20 to 950)
-    # Mixture of dining scales across the food-service industry:
-    # - Small bistro / boutique event: 20 to 150 guests
-    # - Medium restaurant / dining hall: 150 to 500 guests
-    # - Large banquet / conference / convention: 500 to 950 guests
     scales = rng.choice(["small", "medium", "large"], size=num_samples, p=[0.25, 0.45, 0.30])
     customers_forecast_col = np.zeros(num_samples, dtype=int)
 
@@ -97,111 +91,114 @@ def generate_food_surplus_data(num_samples: int = 8000, random_seed: int = 42) -
     customers_forecast_col[l_idx] = rng.integers(501, 951, size=l_idx.sum())
 
     # 7. Operational Planning Regimes for Meals_Prepared:
-    # Food-service kitchens plan batch production based on diverse operational conditions:
-    # - standard_buffer   (~30%): Normal kitchen buffer (+10% to +35%)
-    # - tight_balanced    (~18%): Conservative / just-in-time preparation (-5% to +8%)
-    # - high_buffer       (~18%): Lavish buffet / banquet buffer (+35% to +75%)
-    # - underprep_surge   (~14%): Supply constraint / walk-in rush (Meals = 0.25x to 0.90x forecast)
-    # - large_overprep    (~12%): Cancellation / high minimum contract (+75% to +250%)
-    # - decoupled_extreme (~8%):
-    #     * Severe shortage: limited meals (20-80) despite moderate/high forecast (200-800) -> surplus = 0
-    #     * Massive over-catering: large batch (600-1350) with low attendance (30-150) -> huge surplus
     regimes = rng.choice(
         ["standard_buffer", "tight_balanced", "high_buffer", "underprep_surge", "large_overprep", "decoupled_extreme"],
         size=num_samples,
-        p=[0.30, 0.18, 0.18, 0.14, 0.12, 0.08]
+        p=[0.28, 0.18, 0.18, 0.14, 0.12, 0.10]
     )
 
     meals_prepared_col = np.zeros(num_samples, dtype=int)
 
-    # Standard buffer
+    # Standard buffer (+10% to +35%)
     mask = (regimes == "standard_buffer")
     meals_prepared_col[mask] = np.round(
         customers_forecast_col[mask] * rng.uniform(1.10, 1.35, size=mask.sum())
         + rng.integers(5, 20, size=mask.sum())
     )
 
-    # Tight balanced
+    # Tight balanced (-5% to +8%)
     mask = (regimes == "tight_balanced")
     meals_prepared_col[mask] = np.round(
         customers_forecast_col[mask] * rng.uniform(0.95, 1.08, size=mask.sum())
         + rng.integers(-4, 6, size=mask.sum())
     )
 
-    # High buffer
+    # High buffer (+35% to +75%)
     mask = (regimes == "high_buffer")
     meals_prepared_col[mask] = np.round(
         customers_forecast_col[mask] * rng.uniform(1.35, 1.75, size=mask.sum())
         + rng.integers(15, 35, size=mask.sum())
     )
 
-    # Underprep surge
+    # Underprep surge (Meals < Demand, supply exhausted -> surplus = 0)
     mask = (regimes == "underprep_surge")
     meals_prepared_col[mask] = np.round(
         customers_forecast_col[mask] * rng.uniform(0.25, 0.90, size=mask.sum())
         + rng.integers(-5, 5, size=mask.sum())
     )
 
-    # Large overprep
+    # Large overprep (+75% to +250%)
     mask = (regimes == "large_overprep")
     meals_prepared_col[mask] = np.round(
         customers_forecast_col[mask] * rng.uniform(1.75, 3.50, size=mask.sum())
         + rng.integers(25, 60, size=mask.sum())
     )
 
-    # Decoupled extreme (ensures generalization across the full (C, M) grid)
+    # Decoupled extreme (ensures generalization across extreme corners)
     mask = (regimes == "decoupled_extreme")
     half = mask.sum() // 2
     idx_arr = np.where(mask)[0]
-    # Extreme supply deficit / small kitchen with large crowd:
+    # Extreme supply deficit: limited meals (20-80) with moderate/high crowd (200-800) -> surplus = 0
     meals_prepared_col[idx_arr[:half]] = rng.integers(20, 81, size=half)
-    # Extreme over-catering / large banquet with low attendance:
-    meals_prepared_col[idx_arr[half:]] = rng.integers(600, 1351, size=len(idx_arr) - half)
+    customers_forecast_col[idx_arr[:half]] = rng.integers(200, 801, size=half)
+    # Extreme over-catering: large batch (700-1350) with lower attendance (50-350) -> huge surplus
+    meals_prepared_col[idx_arr[half:]] = rng.integers(700, 1351, size=len(idx_arr) - half)
+    customers_forecast_col[idx_arr[half:]] = rng.integers(50, 351, size=len(idx_arr) - half)
 
     # Physical kitchen batch production bounds
     meals_prepared_col = np.clip(meals_prepared_col, 20, 1400)
 
-    # 8. Staff Count: kitchen and front-of-house staff scales with production and volume
-    base_staff = 3 + (meals_prepared_col // 28) + rng.integers(-2, 3, size=num_samples)
-    staff_count_col = np.clip(base_staff, 4, 52).astype(int)
+    # 8. Staff Count: Scheduled staff on duty (4 to 52)
+    # Realistic operational scheduling: Planned staff roster is set by management based on
+    # anticipated volume, service tier (buffet/banquet need more crew), with natural scheduling variation:
+    optimal_staff_base = 4 + (customers_forecast_col // 28) + np.where(event_col == "Buffet", 3, np.where(event_col == "Banquet", 4, 0))
+    staff_variation = rng.integers(-4, 5, size=num_samples)
+    staff_count_col = np.clip(optimal_staff_base + staff_variation, 4, 52).astype(int)
 
     # 9. Average Rating (2.00 to 5.00)
-    raw_ratings = rng.normal(loc=4.12, scale=0.42, size=num_samples)
+    raw_ratings = rng.normal(loc=4.10, scale=0.45, size=num_samples)
     avg_rating_col = np.round(np.clip(raw_ratings, 2.0, 5.0), 2)
 
     # 10. Multi-feature Demand Simulation:
-    # Realized customer demand is a multi-factor operational function:
-    # expected_consumption = f(Customers_Forecast, Weather, Event_Type, Festival, Special_Event, Day, Avg_Rating, noise)
+    # (a) Weather: Severe storms / rains reduce walk-in customers and outdoor attendance
+    weather_mult = np.where(weather_col == "Stormy", rng.uniform(0.68, 0.76, size=num_samples),
+                   np.where(weather_col == "Rainy",  rng.uniform(0.82, 0.90, size=num_samples),
+                   np.where(weather_col == "Cloudy", rng.uniform(0.95, 0.98, size=num_samples),
+                                                     rng.uniform(1.02, 1.06, size=num_samples))))
 
-    # Weather impact: Severe storms / rains reduce walk-in customers and outdoor attendance
-    weather_mult = np.where(weather_col == "Stormy", rng.uniform(0.68, 0.78, size=num_samples),
-                   np.where(weather_col == "Rainy",  rng.uniform(0.82, 0.92, size=num_samples),
-                   np.where(weather_col == "Cloudy", rng.uniform(0.95, 0.99, size=num_samples),
-                                                     rng.uniform(1.00, 1.04, size=num_samples))))
-
-    # Event Type per-capita dining behavior:
+    # (b) Event Type per-capita dining behavior:
     # Buffets have higher per-capita intake; Banquets formal set courses; Corporate lighter/frugal
-    event_mult = np.where(event_col == "Buffet",    rng.uniform(1.10, 1.18, size=num_samples),
-                 np.where(event_col == "Banquet",   rng.uniform(1.04, 1.10, size=num_samples),
-                 np.where(event_col == "Corporate", rng.uniform(0.88, 0.95, size=num_samples),
+    event_mult = np.where(event_col == "Buffet",    rng.uniform(1.14, 1.22, size=num_samples),
+                 np.where(event_col == "Banquet",   rng.uniform(1.06, 1.12, size=num_samples),
+                 np.where(event_col == "Corporate", rng.uniform(0.84, 0.92, size=num_samples),
                                                     1.00)))
 
-    # Festival impact: Celebration surge increases attendance and group sizes
-    fest_mult = np.where(festival_col != "No", rng.uniform(1.06, 1.15, size=num_samples), 1.00)
+    # (c) Festival impact: Celebration surge increases attendance and group sizes
+    fest_mult = np.where(festival_col != "No", rng.uniform(1.10, 1.20, size=num_samples), 1.00)
 
-    # Special Event impact: Live entertainment / chef specials attract additional diners
-    special_mult = np.where(special_event_col == 1, rng.uniform(1.04, 1.10, size=num_samples), 1.00)
+    # (d) Special Event impact: Themed events / VIP bookings bring higher turnout
+    special_mult = np.where(special_event_col == 1, rng.uniform(1.18, 1.30, size=num_samples), 1.00)
 
-    # Day of week impact: Weekends have higher leisurely dining turnout; Mondays are slower
+    # (e) Day of week impact: Weekends have higher leisurely dining turnout; Mondays are slower
     weekend_mask = np.isin(day_col, ["Friday", "Saturday", "Sunday"])
     monday_mask = (day_col == "Monday")
-    day_mult = np.where(weekend_mask, rng.uniform(1.03, 1.09, size=num_samples),
-               np.where(monday_mask,  rng.uniform(0.92, 0.97, size=num_samples),
+    day_mult = np.where(weekend_mask, rng.uniform(1.06, 1.14, size=num_samples),
+               np.where(monday_mask,  rng.uniform(0.88, 0.94, size=num_samples),
                                       rng.uniform(0.98, 1.02, size=num_samples)))
 
-    # Rating reputation impact: High rating boosts turnout; lower rating dampens conversion
-    rating_mult = 1.0 + (avg_rating_col - 4.0) * 0.05
-    rating_mult = np.clip(rating_mult, 0.88, 1.10)
+    # (f) Rating reputation impact: High rating boosts turnout; lower rating dampens conversion
+    rating_mult = 1.0 + (avg_rating_col - 4.0) * 0.10
+    rating_mult = np.clip(rating_mult, 0.82, 1.15)
+
+    # (g) Staff Count: Service throughput and operational friction
+    # Adequate staffing allows full table turns and uninterrupted service flow.
+    # Understaffed service leads to bottlenecks, walkouts, or dining delays:
+    staff_ratio = staff_count_col / np.maximum(1.0, optimal_staff_base.astype(float))
+    staff_mult = np.where(
+        staff_ratio < 0.85,
+        1.0 - np.clip((0.85 - staff_ratio) * 0.20, 0.0, 0.14),
+        1.0 + np.clip((staff_ratio - 1.0) * 0.06, 0.0, 0.05)
+    )
 
     # Controlled stochastic operational noise (proportional to event size)
     noise = rng.normal(0.0, 0.02 * customers_forecast_col + 2.0, size=num_samples)
@@ -215,27 +212,20 @@ def generate_food_surplus_data(num_samples: int = 8000, random_seed: int = 42) -
         * special_mult
         * day_mult
         * rating_mult
+        * staff_mult
         + noise
     )
     realized_demand = np.maximum(0.0, realized_demand)
 
     # 11. Physical Target Calculation (Surplus_Meals):
-    # Physical law: Meals actually consumed cannot exceed meals prepared (supply ceiling)
-    # consumed = min(meals_prepared, realized_demand)
-    # unconsumed = meals_prepared - consumed = max(0, meals_prepared - realized_demand)
     raw_surplus = meals_prepared_col.astype(float) - realized_demand
 
-    # Presentation / buffer display residue for Buffet and Banquet when surplus > 0
-    display_residue = np.where(
-        (np.isin(event_col, ["Buffet", "Banquet"])) & (raw_surplus > 0),
-        meals_prepared_col * rng.uniform(0.01, 0.03, size=num_samples),
-        0.0
-    )
-
     # Physical domain constraints:
-    # 1. When realized demand >= meals prepared, surplus is 0.0 (all prepared food is consumed)
-    # 2. When realized demand < meals prepared, surplus is unconsumed meals + display residue
-    surplus_meals = np.where(realized_demand >= meals_prepared_col, 0.0, raw_surplus + display_residue)
+    # 1. When realized demand >= meals prepared, surplus is strictly 0.0
+    surplus_meals = np.where(realized_demand >= meals_prepared_col, 0.0, raw_surplus)
+
+    # 2. When customers forecast is clearly greater than available meals, surplus is 0.0
+    surplus_meals = np.where(customers_forecast_col >= 1.5 * meals_prepared_col, 0.0, surplus_meals)
 
     # 3. Strictly enforce physical bounds: 0.0 <= Surplus_Meals <= Meals_Prepared
     surplus_meals = np.clip(surplus_meals, 0.0, meals_prepared_col.astype(float))
@@ -264,6 +254,7 @@ def generate_food_surplus_data(num_samples: int = 8000, random_seed: int = 42) -
 
     return df
 
+
 def save_and_validate_dataset():
     """Generates and writes food_surplus.csv to disk."""
     print(f"[CIBUS-AI] Generating exactly 8,000 synthetic records with seed=42...")
@@ -279,6 +270,7 @@ def save_and_validate_dataset():
     print(f"  - Violations (Surplus < 0): {(df['Surplus_Meals'] < 0.0).sum()}")
     print(f"  - Violations (Surplus > Meals_Prepared): {(df['Surplus_Meals'] > df['Meals_Prepared']).sum()}")
     return df
+
 
 if __name__ == "__main__":
     save_and_validate_dataset()
